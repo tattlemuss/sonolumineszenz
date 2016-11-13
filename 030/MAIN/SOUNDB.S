@@ -2642,9 +2642,9 @@ aonfalc_set_tracks:
 
 mycia_list:
 	ifeq	hertz-2
-	 include cia_33.s
+	 include CIA_33.S
 	else
-	 include cia_25.s
+	 include CIA_25.S
 	endc
 
 Dsp_Library	include	f:\source\tdf\new_os4.s
