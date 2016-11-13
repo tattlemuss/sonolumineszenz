@@ -170,7 +170,7 @@ WaitReady
 
 	EVEN
 DspProg:
-	INCBIN	\dsp_new\lod\new_os3.dsb
+	INCBIN	DSP/LOD/NEW_OS3.DSB
 	EVEN
 DspEnd
 	OPT	P-

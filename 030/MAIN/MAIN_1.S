@@ -142,7 +142,7 @@ hangit		bra	hangit
 
 * Resolution Data:
 		even
-res_1:		incbin	f:\data\tdf\res\blank.scp
+res_1:		incbin	DATA/RES/BLANK.SCP
 
 		ifne	linkfile
 link_file	dc.b	"SL.LNK",0
