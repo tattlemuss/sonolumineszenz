@@ -2647,7 +2647,7 @@ mycia_list:
 	 include CIA_25.S
 	endc
 
-Dsp_Library	include	f:\source\tdf\new_os4.s
+Dsp_Library	include	NEW_OS4.S
 		even
 
 ;---------------------------------------------------------------------
