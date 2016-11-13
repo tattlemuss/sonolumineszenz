@@ -11,8 +11,8 @@ linkfile	equ	1
 loop		equ	0
 
 		opt	nodebug
-		output	c:\_demo\sl.prg
-
+		output	SL.PRG
+		
 		include	EQUATES.S
 
 main_start:
@@ -179,7 +179,7 @@ module_name:		dc.b	"DATA\ACIDTRIP.AON",0
 *-------------------------------------
 *
 *
-		section	bss
+			bss
 *
 *
 
