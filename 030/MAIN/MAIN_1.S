@@ -13,7 +13,7 @@ loop		equ	0
 		opt	nodebug
 		output	c:\_demo\sl.prg
 
-		include	equates.s
+		include	EQUATES.S
 
 main_start:
 * Allocate memory:
@@ -121,16 +121,16 @@ hangit		bra	hangit
 		move.l	old_super_stack,a7
 		rts
 
-		include	script.s
-		include	seq2.s
-		include	oldsys2.s
-		include	newsys.s
-		include	unpack.s
+		include	SCRIPT.S
+		include	SEQ2.S
+		include	OLDSYS2.S
+		include	NEWSYS.S
+		include	UNPACK.S
 
-		include	soundb.s
+		include	SOUNDB.S
 
 		ifne linkfile
-		include	linkfile.s
+		include	LINKFILE.S
 		endc
 
 *-------------------------------------
