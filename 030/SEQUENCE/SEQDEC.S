@@ -18,7 +18,7 @@ system			macro
 music			macro
 			dc.l	"MUSI"
 			endm
-load			macro
+loadfile		macro
 			dc.l	"LOAD"
 			dc.l	\1
 			endm

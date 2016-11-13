@@ -26,8 +26,8 @@ kick_in_script:
 		quit
 		
 main_script:
-		load	mars_data
-		load	fish_data
+		loadfile	mars_data
+		loadfile	fish_data
 		execute	mars_data,0,0,0
 		execute	fish_data,0,0,0
 
@@ -37,7 +37,7 @@ main_script:
 		term	fish_data
 		;quit
 
-		load	title_data
+		loadfile	title_data
 		execute	title_data,0,0,0	;init
 
 		wait	melody+0,$24
@@ -50,9 +50,9 @@ main_script:
 		execute	title_data,1,0,3	;fade title on
 
 ;main_script:
-		load	tree_data
-		load	letters_data
-		load	pic1_data
+		loadfile	tree_data
+		loadfile	letters_data
+		loadfile	pic1_data
 		execute	tree_data,0,0,0
 		execute	letters_data,0,0,0
 		execute	pic1_data,0,0,0
@@ -60,7 +60,7 @@ main_script:
 		wait	melody+4,$00
 		execute	title_data,1,0,4	;fade title off
 
-		load	bee_data
+		loadfile	bee_data
 		execute	bee_data,0,0,0
 
 		wait	melody+4,$2f
@@ -255,18 +255,18 @@ main_script:
 ; load in all the major stuff again
 
 ;main_script:
-		;load	letters_data
+		;loadfile	letters_data
 		;execute	letters_data,0,0,0
 
-		load	inside_data
+		loadfile	inside_data
 		execute	inside_data,0,0,0
-		load	mhed_data
+		loadfile	mhed_data
 		execute	mhed_data,0,0,0
-		load	tunnel_data
+		loadfile	tunnel_data
 		execute	tunnel_data,0,0,0
-		load	maphead_data
+		loadfile	maphead_data
 		execute	maphead_data,0,0,0
-		load	avena_data
+		loadfile	avena_data
 		execute	avena_data,0,0,0
 
 
@@ -325,7 +325,7 @@ main_script:
 		clear
 
 ; Final picture
-		load	pic2_data
+		loadfile	pic2_data
 		execute	pic2_data,0,0,0
 		execute	pic2_data,1,0,0
 
