@@ -524,7 +524,7 @@ aonfalc_set_tempo:
 
 
 ;---------------------------------------------------------------------
-	include	f:\source\tdf\protect.s
+	include	PROTECT.S
 
 
 
