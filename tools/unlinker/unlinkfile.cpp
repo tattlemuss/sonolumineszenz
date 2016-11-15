@@ -13,10 +13,10 @@ struct BigEndWord
 {
 	uint32_t	Get() const
 	{
-		return (m_bytes[0] << 24) |
-			(m_bytes[1] << 16) |
-			(m_bytes[2] << 8) |
-			(m_bytes[3] << 0);
+		return	(((uint32_t)m_bytes[0]) << 24) |
+			(((uint32_t)m_bytes[1]) << 16) |
+			(((uint32_t)m_bytes[2]) << 8) |
+			(((uint32_t)m_bytes[3]) << 0);
 	}
 	uint8_t		m_bytes[4];	
 };
