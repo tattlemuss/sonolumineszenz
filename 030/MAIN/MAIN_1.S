@@ -203,6 +203,20 @@ module:			ds.b	367000		;enough for EIN.AON
 
 load_address_install:	ds.b	128		;420000
 
+;steve@blake:~/projects/atari/sono_git/tools/progsize$ python progsize.py ../../unpacked/*
+;../../unpacked/AVENA.PRG,70242
+;../../unpacked/BEE.PRG,601262
+;../../unpacked/FISH.PRG,345884
+;../../unpacked/INSIDE.PRG,278860
+;../../unpacked/LETTERS.PRG,83662
+;../../unpacked/MAPHEAD.PRG,465036
+;../../unpacked/MARS.PRG,308420
+;../../unpacked/MHED.PRG,112150
+;../../unpacked/PIC1.PRG,185482
+;../../unpacked/TITLE.PRG,257426
+;../../unpacked/TREE.PRG,195788
+;../../unpacked/TUNR.PRG,229010
+
 load_address_1:		ds.b	150000
 load_address_2:		ds.b	300000
 load_address_bee:	ds.b	604000
