@@ -213,23 +213,45 @@ load_address_install:	ds.b	128		;420000
 ;../../unpacked/MARS.PRG,308420
 ;../../unpacked/MHED.PRG,112150
 ;../../unpacked/PIC1.PRG,185482
+;../../unpacked/PIC2.PRG,803982
 ;../../unpacked/TITLE.PRG,257426
 ;../../unpacked/TREE.PRG,195788
 ;../../unpacked/TUNR.PRG,229010
 
-load_address_1:		ds.b	150000
-load_address_2:		ds.b	300000
-load_address_bee:	ds.b	604000
+;steve@blake:~/projects/atari/sono_git/030/MAIN$ egrep -e "loadfile|term"  SEQ2.S 
+;		loadfile	mars_data
+;		loadfile	fish_data
+;		term	mars_data
+;		term	fish_data
+
+;		loadfile	title_data
+;		loadfile	tree_data
+;		loadfile	letters_data
+;		loadfile	pic1_data
+;		loadfile	bee_data
+;		term	title_data
+
+;		;loadfile	letters_data
+;		loadfile	inside_data
+;		loadfile	mhed_data
+;		loadfile	tunnel_data
+;		loadfile	maphead_data
+;		loadfile	avena_data
+;		loadfile	pic2_data
+
+load_address_1:		ds.b	150000		;fish/letters/pic2
+load_address_2:		ds.b	300000		;mhed/tree
+load_address_bee:	ds.b	604000		;bee
 
 load_address_mhed	=	load_address_2
-load_address_inside	=	load_address_mhed+270000
-load_address_tunnel	=	load_address_inside+300000
-load_address_maphead	=	load_address_tunnel+235000
-load_address_avena	=	load_address_maphead+467000
+load_address_inside	=	load_address_mhed+270000		;inside
+load_address_tunnel	=	load_address_inside+300000		;tunnel
+load_address_maphead	=	load_address_tunnel+235000	;maphead
+load_address_avena	=	load_address_maphead+467000		;avena
 
-load_address_pic1	=	load_address_avena+275000+100000
+load_address_pic1	=	load_address_avena+275000+100000	;pic1
 
-load_address_3:		ds.b	load_address_pic1-load_address_3
+load_address_3:		ds.b	load_address_pic1-load_address_3	;title, mars
 
 
 
