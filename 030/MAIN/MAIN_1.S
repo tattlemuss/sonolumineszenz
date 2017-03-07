@@ -10,8 +10,9 @@ testing		equ	0
 linkfile	equ	1
 loop		equ	0
 
-		opt	nodebug
+		;opt	nodebug
 		output	SL.PRG
+		opt		d+,s+			;output symbols (stripped on release)
 		
 		include	EQUATES.S
 
@@ -136,7 +137,7 @@ hangit		bra	hangit
 *-------------------------------------
 *
 *
-		section	data
+		section	DATA
 *
 *
 
