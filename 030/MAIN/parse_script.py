@@ -2,9 +2,9 @@ from PIL import Image, ImageDraw, ImageColor
 import fileinput
 
 starts = {
-    "mars_data" : 1797000,
+    "mars_data" : 450000,
     "fish_data" : 0,
-    "title_data" : 1797000,
+    "title_data" : 450000,
     "tree_data" : 150000,
     "letters_data" : 0,
     "pic1_data" : 1797000,
@@ -16,6 +16,7 @@ starts = {
     "avena_data" : 1422000,
     "pic2_data" : 0,
 }
+
 
 sizes = {
     "mars_data" : 308420,
@@ -51,6 +52,7 @@ colours = {
     "avena_data" : "white",
     "pic2_data" : "cyan",
 }
+
 
 #;../../unpacked/AVENA.PRG,70242			70242	1422000	1492242
 #;../../unpacked/BEE.PRG,601262			    601262	450000	1051262
