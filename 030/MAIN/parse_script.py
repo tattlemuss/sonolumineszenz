@@ -1,4 +1,4 @@
-
+from PIL import Image, ImageDraw, ImageColor
 import fileinput
 
 starts = {
@@ -33,20 +33,23 @@ sizes = {
     "pic2_data" : 803982,
 }
 
+first_step = {}
+last_step = {}
+
 colours = {
-    "mars_data" : 308420,
-    "fish_data" : 345884,
-    "title_data" : 257426,
-    "tree_data" : 195788,
-    "letters_data" : 83662,
-    "pic1_data" : 185482,
-    "bee_data" : 601262,
-    "inside_data" : 278860,
-    "mhed_data" : 112150,
-    "tunnel_data" : 229010,
-    "maphead_data" : 465036,
-    "avena_data" : 70242,
-    "pic2_data" : 803982,
+    "mars_data" : "red",
+    "fish_data" : "blue",
+    "title_data" : "white",
+    "tree_data" : "green",
+    "letters_data" : "grey",
+    "pic1_data" : "orange",
+    "bee_data" : "yellow",
+    "inside_data" : "lime",
+    "mhed_data" : "purple",
+    "tunnel_data" : "yellow",
+    "maphead_data" : "brown",
+    "avena_data" : "white",
+    "pic2_data" : "cyan",
 }
 
 #;../../unpacked/AVENA.PRG,70242			70242	1422000	1492242
@@ -64,15 +67,10 @@ colours = {
 #;../../unpacked/PIC2.PRG,803982			803982	0	803982
 
 import sys
-from PIL import Image, ImageDraw
-i = Image.new("RGB", (2000, 400), (128, 128, 128))
-
-draw = ImageDraw.Draw(i)
 
 div = 1024 * 2
 y = 0
 
-draw.line((0, 0, 400, 400), fill=128)
 blockheight = 5
 for line in fileinput.input():
     if line.find("execute") != -1:
@@ -80,14 +78,35 @@ for line in fileinput.input():
         rest = line.split("\t")[3]
         progname = rest.split(",")[0]
 
-        start = starts[progname]
-        size = sizes[progname]
-        end = start + size
-        draw.rectangle((start / div, y, end / div, y + blockheight), fill=colours[progname])
+        last_step[progname] = y
+        if not first_step.has_key(progname):
+            print "%s seen at %d" % (progname, y)
+            first_step[progname] = y
 
-        print start / div
-        y += blockheight
+        y += 1
+
+# Now render them
+
+i = Image.new("RGB", (1600, 700), (64, 64, 64))
+
+draw = ImageDraw.Draw(i)
+for progname in first_step.keys():
+    start = starts[progname]
+    size = sizes[progname]
+    end = start + size
+
+    first = first_step[progname]
+    last = last_step[progname]
+
+    print "%s seen at %d -> %d" % (progname, first, last)
+    
+    col = ImageColor.getcolor(colours[progname], "RGB")
+    draw.rectangle( (start / div, first * blockheight, 
+                    end / div,
+                    (last + 1) * blockheight), outline=col)
+    draw.text( (start / div, first * blockheight), progname)
 
 fp = open("map.png", "wb")
 i.save(fp, "PNG")
 fp.close()
+print y
