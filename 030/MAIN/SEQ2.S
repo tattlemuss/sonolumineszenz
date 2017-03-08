@@ -335,15 +335,14 @@ main_script:
 		even
 
 ;-----------------------------------------------------------------------
-
 title_data:
-		DC.L	load_address_3
+		DC.L	load_address_title
 		DC.W	0			;active flag
 		DC.B	"DATA\TITLE.PRG",0	;filename
 		EVEN
 
 mars_data:
-		DC.L	load_address_3
+		DC.L	load_address_mars
 		DC.W	0			;active flag
 		DC.B	"DATA\MARS.PRG",0	;filename
 		EVEN
@@ -355,15 +354,16 @@ install_data:
 		EVEN
 
 fish_data:
-		DC.L	load_address_1
+		DC.L	load_address_fish
 		DC.W	0			;active flag
 		DC.B	"DATA\FISH.PRG",0	;filename
 		EVEN
 tree_data:
-		DC.L	load_address_2
+		DC.L	load_address_tree
 		DC.W	0			;active flag
 		DC.B	"DATA\TREE.PRG",0	;filename
 		EVEN
+		
 bee_data:
 		DC.L	load_address_bee
 		DC.W	0			;active flag
@@ -371,7 +371,7 @@ bee_data:
 		EVEN
 
 letters_data:
-		DC.L	load_address_1
+		DC.L	load_address_letters
 		DC.W	0			;active flag
 		DC.B	"DATA\LETTERS.PRG",0	;filename
 		EVEN
@@ -408,7 +408,7 @@ pic1_data:
 		DC.B	"DATA\PIC1.PRG",0	;filename
 		EVEN
 pic2_data:
-		DC.L	load_address_1
+		DC.L	load_address_pic2
 		DC.W	0			;active flag
 		DC.B	"DATA\PIC2.PRG",0	;filename
 		EVEN
