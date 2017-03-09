@@ -1,19 +1,46 @@
 from PIL import Image, ImageDraw, ImageColor
 import fileinput
 
+def adjust(x):
+    return x - 0x64410
+
+load_address_pic1 = adjust(0x21af98)
+load_address_maphead = adjust(0x14d688)
+load_address_bee = adjust(0xd21e0)
+load_address_tunnel = adjust(0x114090)
+#load_address_install = adjust(0x64390)
+load_address_avena = adjust(0x1bf6c0)
+load_address_1 = adjust(0x64410)
+load_address_2 = adjust(0x88e00)
+load_address_3 = adjust(0x165940)
+load_address_mhed = adjust(0x88e00)
+load_address_inside = adjust(0xcacb0)
+
+#Implicit
+#;load_address_1:		ds.b	150000		;fish/letters/pic2
+#;load_address_2:		ds.b	300000		;mhed/tree
+#;load_address_3:		ds.b	300000		;title/mars_data
+
+load_address_mars = load_address_3
+load_address_fish = load_address_1
+load_address_title = load_address_3 
+load_address_tree = load_address_2
+load_address_letters = load_address_1
+load_address_pic2 = load_address_1
+
 starts = {
-    "mars_data" : 450000,
-    "fish_data" : 0,
-    "title_data" : 450000,
-    "tree_data" : 150000,
-    "letters_data" : 0,
-    "pic1_data" : 1797000,
-    "bee_data" : 450000,
-    "inside_data" : 420000,
-    "mhed_data" : 150000,
-    "tunnel_data" : 720000,
-    "maphead_data" : 955000,
-    "avena_data" : 1422000,
+    "mars_data" : load_address_mars,
+    "fish_data" : load_address_fish,
+    "title_data" : load_address_title,
+    "tree_data" : load_address_tree,
+    "letters_data" : load_address_letters,
+    "pic1_data" : load_address_pic1,
+    "bee_data" : load_address_bee,
+    "inside_data" : load_address_inside,
+    "mhed_data" : load_address_mhed,
+    "tunnel_data" : load_address_tunnel,
+    "maphead_data" : load_address_maphead,
+    "avena_data" : load_address_avena,
     "pic2_data" : 0,
 }
 
