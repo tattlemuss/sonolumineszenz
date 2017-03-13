@@ -18,6 +18,7 @@ def loader_tos(input_file, fh):
     if header != 0x601a:
         raise Exception('m68kdis: Incorrect PRG file header')
     
+    #print "--------"
     #print "Text length %u" % textlen
     #print "Data length %u" % datalen
     #print "Symbol length %u" % symbollen
@@ -27,7 +28,7 @@ def loader_tos(input_file, fh):
 if __name__ == '__main__':
     import sys, getopt, os
     
-    for input_file in sys.argv[2:]:
+    for input_file in sys.argv[1:]:
         try:
             fh = open(input_file, 'rb')
             # Load based on filename extension
