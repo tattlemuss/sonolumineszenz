@@ -224,7 +224,6 @@ load_address_install:	ds.b	128		;420000
 ;load_address_1:		ds.b	150000		;fish/letters/pic2
 ;load_address_2:		ds.b	300000		;mhed/tree
 
-load_address_pic1:			equ *+$21af98-$64410
 load_address_maphead:		equ *+$14d688-$64410
 load_address_bee:			equ *+$d21e0-$64410
 load_address_tunnel:		equ *+$114090-$64410
@@ -244,6 +243,8 @@ load_address_title:			equ *+$165940-$64410
 load_address_mars:			equ *+$165940-$64410
 
 load_address_inside:		equ *+$cacb0-$64410
+
+load_address_pic1:			equ load_address_avena+71000
 
 							ds.b 	2054426
 
