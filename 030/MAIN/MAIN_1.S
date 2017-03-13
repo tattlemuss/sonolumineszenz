@@ -246,7 +246,7 @@ load_address_inside:		equ *+$cacb0-$64410
 
 load_address_pic1:			equ *+$21af98-$64410
 ; This doesn't work because it overlaps title
-;load_address_pic1:			equ load_address_avena+71000
+;load_address_pic1:			equ load_address_title+257426+1*76800+307200+10000
 
 							ds.b 	2054426
 
