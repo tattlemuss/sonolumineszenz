@@ -63,7 +63,7 @@ int main(int argc, const char** argv)
 	count.Set(fileCount);
 	fwrite(&count, sizeof(count), 1, pOutput);
 	
-	for (uint i = 0; i < fileCount; ++i)
+	for (uint32_t i = 0; i < fileCount; ++i)
 	{
 		FileEntry entry;
 		const char* pName = argv[i + 1];
@@ -113,7 +113,7 @@ int main(int argc, const char** argv)
 	
 	// Now copy the file data	
 	uint8_t* pData = (uint8_t*) malloc(MAX_SIZE);
-	for (uint i = 0; i < fileCount; ++i)
+	for (uint32_t i = 0; i < fileCount; ++i)
 	{
 		const char* pName = argv[i + 1];
 		FILE* pInfile = fopen(pName, "rb");
