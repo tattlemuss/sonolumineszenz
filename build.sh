@@ -3,7 +3,12 @@
 # Clean
 rm SL.LNK
 rm SL.PRG
+rm unpacked/TITLE.PRG
 rm *.O
+
+# Build TITLE.PRG
+vasmm68k_mot -Felf -devpac -nocase -m68030 030/TITLE/TITLE.S -o TITLE.O
+vlink TITLE.O -s -b ataritos -o unpacked/TITLE.PRG
 
 # Build the main prg
 vasmm68k_mot -Felf -devpac -nocase -m68030 -I ..  -I 030/MAIN -I 030/CIA/ -I 030 -I DATA/ 030/MAIN/MAIN_1.S -o MAIN_1.O
