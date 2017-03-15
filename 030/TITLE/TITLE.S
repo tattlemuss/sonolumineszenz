@@ -1,50 +1,42 @@
-; looks like 384 bytes/line
-
-screen_memory EQU ZUEND+$FA0
+L0049 EQU ZUEND+$FA0
  TEXT 
 Begin:
-      MOVE.L    A1,which_routine
+      MOVE.L    A1,L0048
       MOVE.L    A0,-(A7)
       MOVE.L    A0,D0 
       MOVE.W    D0,D7 
       SWAP      D0
       CMP.W     #1,D0 
-      BEQ       execute_start 
-      
-      ; init using 3 screens after this program
+      BEQ       L0000 
       MOVEQ     #5,D0 
       TRAP      #6
       MOVE.L    A0,L0047
-      MOVE.L    #screen_memory,D0 
+      MOVE.L    #L0049,D0 
       SUB.B     D0,D0 
-      MOVE.L    D0,screen1
+      MOVE.L    D0,L0045
       ADDI.L    #$12C00,D0
-      MOVE.L    D0,screen2
+      MOVE.L    D0,L0046
       ADDI.L    #$12C00,D0
-      MOVE.L    D0,screen3
-      BSR       do_nothing 
+      MOVE.L    D0,L0044
+      BSR       L0004 
       MOVEQ     #9,D0 
       MOVEC     D0,CACR 
       MOVEA.L   (A7)+,A0
       RTS 
-execute_start:
-      BRA       execute_routine 
-      
-      
-      MOVE.L    screen1,D0
-      MOVE.L    screen3,screen1 
-      MOVE.L    screen2,screen3 
-      MOVE.L    D0,screen2
-      MOVE.L    screen2,-(A7) 
+L0000:BRA       L0005 
+      MOVE.L    L0045,D0
+      MOVE.L    L0044,L0045 
+      MOVE.L    L0046,L0044 
+      MOVE.L    D0,L0046
+      MOVE.L    L0046,-(A7) 
       MOVE.B    1(A7),$FFFF8201.W 
       MOVE.B    2(A7),$FFFF8203.W 
       MOVE.B    3(A7),$FFFF820D.W 
       ADDQ.L    #4,A7 
       RTS 
-      
-      MOVEA.L   screen2,A0
-      MOVEA.L   screen1,A1
-      MOVEA.L   screen3,A2
+      MOVEA.L   L0046,A0
+      MOVEA.L   L0045,A1
+      MOVEA.L   L0044,A2
       MOVE.L    #-1,D0
       MOVE.L    #$4B00,D1 
 L0001:MOVE.L    D0,(A0)+
@@ -53,26 +45,23 @@ L0001:MOVE.L    D0,(A0)+
       SUBQ.L    #1,D1 
       BNE.S     L0001 
       RTS 
-wait_vbl:
-      MOVE.L    $466.W,D0 
+L0002:MOVE.L    $466.W,D0 
 L0003:CMP.L     $466.W,D0 
       BEQ.S     L0003 
       RTS 
-do_nothing:RTS 
-execute_routine:
-      MOVE.L    which_routine,D0
+L0004:RTS 
+L0005:MOVE.L    L0048,D0
       JSR       ([L0006,D0.W*4])
       MOVEA.L   (A7)+,A0
       RTS 
-L0006:DC.L      routine0 
-      DC.L      routine0 
-      DC.L      routine2 
-      DC.L      routine3 
-      DC.L      routine4 
-      DC.L      routine5 
-clear_2_screens_white:
-      MOVEA.L   screen2,A0
-      MOVEA.L   screen1,A1
+L0006:DC.L      L000B 
+      DC.L      L000B 
+      DC.L      L000C 
+      DC.L      L000D 
+      DC.L      L000F 
+      DC.L      L0013 
+L0007:MOVEA.L   L0046,A0
+      MOVEA.L   L0045,A1
       MOVEQ     #-1,D0
       MOVE.W    #$4AFF,D2 
 L0008:MOVE.L    D0,(A0)+
@@ -85,9 +74,8 @@ L0008:MOVE.L    D0,(A0)+
       MOVE.L    D0,(A1)+
       DBF       D2,L0008
       RTS 
-clear_2_screens_black:
-      MOVEA.L   screen2,A0
-      MOVEA.L   screen1,A1
+L0009:MOVEA.L   L0046,A0
+      MOVEA.L   L0045,A1
       MOVEQ     #0,D0 
       MOVE.W    #$4AFF,D2 
 L000A:MOVE.L    D0,(A0)+
@@ -100,70 +88,63 @@ L000A:MOVE.L    D0,(A0)+
       MOVE.L    D0,(A1)+
       DBF       D2,L000A
       RTS 
-
-routine0:
-      MOVE.L    #active_palette_vals,palette_pointer_1
-      MOVE.L    #white_palette_vals,palette_pointer_2
-      MOVE.W    #$7FFF,fade_fraction
-      BSR       clear_2_screens_white 
-      BSR       wait_vbl 
-      MOVE.L    screen2,-(A7) 
+L000B:MOVE.L    #L0042,L0039
+      MOVE.L    #L003B,L003A
+      MOVE.W    #$7FFF,L0038
+      BSR       L0007 
+      BSR       L0002 
+      MOVE.L    L0046,-(A7) 
       MOVE.B    1(A7),$FFFF8201.W 
       MOVE.B    2(A7),$FFFF8203.W 
       MOVE.B    3(A7),$FFFF820D.W 
       ADDQ.L    #4,A7 
-      BSR       wait_vbl 
-      BSR       set_videl_resolution 
-      BSR       write_palette_to_regs 
-      MOVEA.L   #calc_palette,A0 
+      BSR       L0002 
+      BSR       L003C 
+      BSR       L001A 
+      MOVEA.L   #L0017,A0 
       MOVEQ     #6,D0 
       TRAP      #6
-      LEA       possible_picture_data,A2
+      LEA       L003F,A2
       MOVE.L    #$40,D0 
-      BSR       copy_from_a2_to_screen2 
-      BSR       wait_vbl 
-      MOVE.L    #white_palette_vals,palette_pointer_1
-      MOVE.L    #second_palette,palette_pointer_2
-      MOVE.W    #$7FFF,fade_fraction
+      BSR       L0014 
+      BSR       L0002 
+      MOVE.L    #L003B,L0039
+      MOVE.L    #L003E,L003A
+      MOVE.W    #$7FFF,L0038
       RTS 
-routine2:
-      MOVE.L    #second_palette,palette_pointer_1
-      MOVE.L    #white_palette_vals,palette_pointer_2
-      MOVE.W    #$7FFF,fade_fraction
+L000C:MOVE.L    #L003E,L0039
+      MOVE.L    #L003B,L003A
+      MOVE.W    #$7FFF,L0038
       RTS 
-routine3:
-      BSR       clear_2_screens_black 
-      BSR       unpack_pic_to_screen2 
-      BSR       second_palette 
-      BSR       force_videl_width 
-      MOVE.L    #L0043,palette_pointer_1
-      MOVE.L    #L0041,palette_pointer_2
-      MOVE.W    #$7FFF,fade_fraction
-      CLR.L     scroll_x_amount 
+L000D:BSR       L0009 
+      BSR       L001C 
+      BSR       L0035 
+      BSR       L003D 
+      MOVE.L    #L0043,L0039
+      MOVE.L    #L0041,L003A
+      MOVE.W    #$7FFF,L0038
+      CLR.L     L000E 
       MOVEA.L   #L0010,A0 
       MOVEQ     #6,D0 
       TRAP      #6
       RTS 
-scroll_x_amount:DCB.W     2,0 
-routine4:
-      MOVE.L    #L0041,palette_pointer_1
-      MOVE.L    #L0043,palette_pointer_2
-      MOVE.W    #$7FFF,fade_fraction
-      RTS
-
-L0010:ADDQ.L    #1,scroll_x_amount
-      MOVE.L    scroll_x_amount,D0
+L000E:DCB.W     2,0 
+L000F:MOVE.L    #L0041,L0039
+      MOVE.L    #L0043,L003A
+      MOVE.W    #$7FFF,L0038
+      RTS 
+L0010:ADDQ.L    #1,L000E
+      MOVE.L    L000E,D0
       MOVE.L    D0,D1 
       ANDI.L    #$F,D1
       ASR.L     #4,D0 
       ASL.L     #4,D0 
-      ADD.L     screen2,D0
+      ADD.L     L0046,D0
       MOVE.L    D0,-(A7)
       MOVE.B    1(A7),$FFFF8201.W 
       MOVE.B    2(A7),$FFFF8203.W 
       MOVE.B    3(A7),$FFFF820D.W 
-      ADDQ.L    #4,A7
-      ; compensate for 0-pixel subscroll 
+      ADDQ.L    #4,A7 
       TST.W     D1
       BNE.S     L0011 
       MOVE.W    #$180,$FFFF820E.W 
@@ -171,19 +152,15 @@ L0010:ADDQ.L    #1,scroll_x_amount
       BRA       L0012 
 L0011:MOVE.W    #$178,$FFFF820E.W 
       MOVE.W    D1,$FFFF8264.W
-L0012:BSR       calc_palette 
+L0012:BSR       L0017 
       RTS 
-      ; Finish?
-routine5:
-      MOVEA.L   #0,A0 
+L0013:MOVEA.L   #0,A0 
       MOVEQ     #6,D0 
       TRAP      #6
       CLR.W     $FFFF820E.W 
       CLR.W     $FFFF8264.W 
-      RTS
-
-copy_from_a2_to_screen2:
-      MOVEA.L   screen2,A0
+      RTS 
+L0014:MOVEA.L   L0046,A0
       ADDA.L    D0,A0 
       MOVE.W    #$C7,D2 
 L0015:MOVEA.L   A0,A3 
@@ -195,15 +172,13 @@ L0016:MOVE.L    (A2)+,(A3)+
       DBF       D3,L0016
       LEA       $180(A0),A0 
       DBF       D2,L0015
-      RTS
-
-calc_palette:
-      BSR       write_palette_to_regs 
-      LEA       active_palette_vals,A0
-      MOVEA.L   palette_pointer_1(PC),A2
-      MOVEA.L   palette_pointer_2(PC),A1
+      RTS 
+L0017:BSR       L001A 
+      LEA       L0042,A0
+      MOVEA.L   L0039(PC),A2
+      MOVEA.L   L003A(PC),A1
       MOVE.W    #$FF,D0 
-      MOVE.W    fade_fraction(PC),D1
+      MOVE.W    L0038(PC),D1
 L0018:MOVEQ     #0,D2 
       MOVEQ     #0,D3 
       MOVE.B    (A1)+,D2
@@ -233,34 +208,27 @@ L0018:MOVEQ     #0,D2
       ADD.W     D3,D2 
       MOVE.W    D2,(A0)+
       DBF       D0,L0018
-      SUBI.W    #$80,fade_fraction
+      SUBI.W    #$80,L0038
       BGT.S     L0019 
-      CLR.W     fade_fraction 
-L0019:RTS
-
-write_palette_to_regs:
-      MOVE.W    #$FF,D0 
-      LEA       active_palette_vals,A0
+      CLR.W     L0038 
+L0019:RTS 
+L001A:MOVE.W    #$FF,D0 
+      LEA       L0042,A0
       LEA       $FFFF9800.W,A1
 L001B:MOVE.L    (A0)+,(A1)+ 
       DBF       D0,L001B
       RTS 
       RTE 
-unpack_pic_to_screen2:
-      LEA       ximg_data,A0
-      MOVEA.L   screen2,A1
+L001C:LEA       L0040,A0
+      MOVEA.L   L0046,A1
       ADDA.L    #$B4C0,A1 
-      BSR       unpack_ximg 
+      BSR       L0021 
       RTS 
-
-ximg_unpack_workspace:DCB.W     1024,0
-
+L001D:DCB.W     1024,0
 L001E:DC.B      $00,$00 
 L001F:DC.B      $04,$80,$00,$02 
 L0020:DC.B      $00,$00 
-
-unpack_ximg:
-      CMPI.L    #$58494D47,$10(A0)
+L0021:CMPI.L    #$58494D47,$10(A0)
       BNE.S     L0023 
       LEA       $16(A0),A2
       LEA       L0041,A3
@@ -301,15 +269,15 @@ L0026:BSR       L0027
       SUBA.W    4(A0),A1
       SUBA.W    4(A0),A1
       DBF       D0,L0025
-      RTS
-L0027:LEA       ximg_unpack_workspace(PC),A3
+      RTS 
+L0027:LEA       L001D(PC),A3
       MOVEA.L   A3,A4 
       ADDA.W    L0020(PC),A4
 L0028:MOVEQ     #0,D2 
       MOVE.B    (A2)+,D2
       BEQ       L0029 
       CMP.B     #-$80,D2
-      BEQ       copy_x_bytes 
+      BEQ       L002C 
       BRA       L002E 
 L0029:MOVEQ     #0,D3 
       MOVE.B    (A2)+,D3
@@ -325,9 +293,7 @@ L002B:MOVE.B    (A5)+,(A3)+
       CMPA.L    A4,A3 
       BLT.S     L0028 
       BRA       L0030 
-
-copy_x_bytes:
-      MOVE.B    (A2)+,D2
+L002C:MOVE.B    (A2)+,D2
       SUBQ.W    #1,D2 
 L002D:MOVE.B    (A2)+,(A3)+ 
       DBF       D2,L002D
@@ -342,7 +308,7 @@ L002F:MOVE.B    D3,(A3)+
       DBF       D2,L002F
       CMPA.L    A4,A3 
       BLT       L0028 
-L0030:LEA       ximg_unpack_workspace(PC),A3
+L0030:LEA       L001D(PC),A3
       MOVE.W    L001E(PC),D4
       SUBQ.W    #1,D4 
       PEA       (A1)
@@ -374,28 +340,23 @@ L0034:MOVE.W    D3,-(A7)
       ADDQ.L    #4,A7 
       DBF       D0,L0025
       RTS 
-;------------------------- ximg unpack end ----------------------
-
-mystery_interpolator:
-      LEA       L0041,A0
+L0035:LEA       L0041,A0
       LEA       L0041,A1
       MOVE.W    #$FF,D0 
 L0036:MOVE.B    (A0)+,D1
-      BSR.S     .lerp_value 
+      BSR.S     L0037 
       MOVE.B    D1,(A1)+
       MOVE.B    (A0)+,D1
-      BSR.S     .lerp_value 
+      BSR.S     L0037 
       MOVE.B    D1,(A1)+
-
       ADDQ.L    #1,A0 
       ADDQ.L    #1,A1 
       MOVE.B    (A0)+,D1
-      BSR.S     .lerp_value 
+      BSR.S     L0037 
       MOVE.B    D1,(A1)+
       DBF       D0,L0036
       RTS 
-.lerp_value:
-      ANDI.W    #$FF,D1 
+L0037:ANDI.W    #$FF,D1 
       MOVE.W    #$FF,D2 
       SUB.W     D1,D2 
       MULS      #$6000,D2 
@@ -404,10 +365,10 @@ L0036:MOVE.B    (A0)+,D1
       MOVE.W    #$FF,D1 
       SUB.W     D2,D1 
       RTS 
-fade_fraction:DC.B      $00,$00 
-palette_pointer_1:DCB.W     2,0 
-palette_pointer_2:DCB.W     2,0 
-white_palette_vals:DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC 
+L0038:DC.B      $00,$00 
+L0039:DCB.W     2,0 
+L003A:DCB.W     2,0 
+L003B:DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC 
       DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC 
       DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC 
       DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC 
@@ -664,8 +625,7 @@ white_palette_vals:DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC
       DC.B      $00,' ',$00,$00,$00,' ',$00,$00 
       DC.B      $00,' ',$00,$00,$00,' ',$00,$00 
       DC.B      $00,' ' 
-set_videl_resolution:
-      MOVE.L    #$FE00CC,$FFFF8282.W
+L003C:MOVE.L    #$FE00CC,$FFFF8282.W
       MOVE.L    #$280003,$FFFF8286.W
       MOVE.L    #$A400D9,$FFFF828A.W
       MOVE.L    #$2710211,$FFFF82A2.W 
@@ -678,10 +638,10 @@ set_videl_resolution:
       MOVE.W    #0,$FFFF82C2.W
       MOVE.W    #$C0,$FFFF8210.W
       RTS 
-force_videl_width:MOVE.W    #$300,$FFFF820E.W 
+L003D:MOVE.W    #$300,$FFFF820E.W 
       RTS 
  DATA 
-second_palette:DCB.W     4,0 
+L003E:DCB.W     4,0 
       DC.B      $00,$04,$00,$00,$04,$04,$00,$04 
       DC.B      $04,$08,$00,$04,$08,$0C,$00,$08 
       DC.B      $08,$0C,$00,$08,$08,$10,$00,$0C 
@@ -809,7 +769,7 @@ second_palette:DCB.W     4,0
       DC.B      $F8,$F8,$00,$F4,$F8,$F8,$00,$F4 
       DC.B      $F8,$F8,$00,$F4,$F8,$F8,$00,$F4 
       DC.B      $F8,$F8,$00,$F4,$F8,$F8,$00,$F4 
-possible_picture_data:DCB.W     4,0 
+L003F:DCB.W     4,0 
       DC.B      $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF 
       DCB.W     4,0 
       DC.B      $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF 
@@ -5882,7 +5842,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $E0,$00,$FF,$FF,$00,$00,$00,$00 
       DC.B      $1F,$00,$1F,$FF,']r',$DC,$D6
       DC.B      '#',$CE,$FF,$C1,$00,'?',$00,$00 
-      DC.B      $0F,$C1,$FF,$C0,'^ÔøΩk',$18 
+      DC.B      $0F,$C1,$FF,$C0,'^ôk',$18 
       DC.B      's',$E7,$83,$FF,$FC,$00,$00,$00 
       DC.B      $BC,'<',$BF,$C3,'Wx',$F2,$FE
       DC.B      $F1,$FE,$F0,$01,$0F,$FF,$00,$00 
@@ -6558,7 +6518,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $C0,$0F,$0F,$F8,$00,$06,$00,$00 
       DC.B      $80,$07,$A0,$01,$10,$02,' ',$01 
       DC.B      $C0,$00,$00,'x',$01,$81,$00,$01 
-      DC.B      $94,$06,$01,$02,'DÔøΩ9',$02 
+      DC.B      $94,$06,$01,$02,'DÑ9',$02 
       DC.B      $FE,$01,$00,'?',$FE,$00,$FF,$C0 
       DC.B      'B',$00,'O',$C0,$CA,$80,'3',$00 
       DC.B      $FC,$00,$C0,$07,'0',$F8,'0',$00 
@@ -6668,7 +6628,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FF,$FF,$FF,$FD,$FF,$FE,$FF,$FF 
       DC.B      $0F,$FF,'`',$00,$E0,$00,$A0,$00 
       DC.B      '0',$00,'`',$00,'@',$00,$80,$00 
-      DC.B      $00,$00,'c',$8C,$1F,$83,'ÔøΩ='
+      DC.B      $00,$00,'c',$8C,$1F,$83,'ö='
       DC.B      'IT8',$CC,$07,$C3,$00,'?' 
       DC.B      $03,$E0,'<',$18,$FC,$18,$DC,$05 
       DC.B      'T',$15,'p',$07,$98,$0C,$E0,$03 
@@ -6727,7 +6687,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FC,$00,$03,$07,$00,$07,$03,$82 
       DC.B      $01,'Q',$00,$CF,$00,'?',$00,$00 
       DC.B      $00,$00,$FF,$81,$FF,$80,$AC,$8D 
-      DC.B      'ÔøΩf',$86,$0D,$81,$F6,$7F,$F8
+      DC.B      'öf',$86,$0D,$81,$F6,$7F,$F8
       DC.B      $00,$C0,$F2,$C9,$08,$C4,'s',$ED 
       DC.B      $AE,$EC,$13,$F3,$09,$FF,$07,$FF 
       DC.B      $00,$00,$C0,$00,' ',$00,$E0,$00 
@@ -6788,7 +6748,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FF,$FC,$FF,$FE,$FF,$FF,$FF,$FF 
       DC.B      $1F,$E0,'@',$0D,$C0,$04,$C0,$0C 
       DC.B      $C0,$0E,' ',$1A,'@',$06,$80,$01 
-      DC.B      $00,$00,$93,'ÔøΩp~',$A1,$DC 
+      DC.B      $00,$00,$93,'ép~',$A1,$DC 
       DC.B      '~5',$00,$0C,$00,$03,$FF,$FF
       DC.B      $03,$E0,'x',$00,$04,$1F,' ',$04 
       DC.B      $88,$02,'$',$0B,$C8,$06,$F0,$01 
@@ -7008,7 +6968,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $C6,$E6,'[',$FC,'h',$A8,$27,'0' 
       DC.B      $1F,$C0,$F0,$00,$00,$00,$0F,$FF 
       DC.B      $06,$D2,$0D,$AB,$06,$89,$02,'r' 
-      DC.B      $01,$FC,$01,$80,$FD,$96,$FD,'ÔøΩ' 
+      DC.B      $01,$FC,$01,$80,$FD,$96,$FD,'é' 
       DC.B      '_',$FE,$AB,$BE,$17,$C1,$0B,$FF 
       DC.B      $07,$FF,$00,$00,'l',$00,'$',$00 
       DC.B      $1C,$00,$03,$FF,$FF,$FF,$FF,$FF 
@@ -7033,7 +6993,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $00,$07,$01,$FC,'8',$01,$06,$00 
       DC.B      'P',$03,$A4,$02,',',$00,$C8,$01 
       DC.B      $F0,$00,$00,$00,$03,$F0,$00,$0F 
-      DC.B      $BA,$D3,'C',$BA,'CÔøΩ<}'
+      DC.B      $BA,$D3,'C',$BA,'CÅ<}'
       DC.B      $FF,$FE,$1F,$00,' ',$EF,$C0,$03 
       DC.B      $C0,$82,$C0,$A4,$80,'0',$00,'o' 
       DC.B      $00,$1F,$07,$FC,$C0,$00,$F8,$00 
@@ -7227,13 +7187,13 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FF,$FF,$00,$10,$00,$10,$00,$10 
       DC.B      $00,'8',$FF,$FE,$FF,$FF,$FF,$FF 
       DC.B      $FF,$FF,$1E,$00,$A1,'U`',$CC
-      DC.B      '!, ÔøΩ ',$DE,$80,'@' 
+      DC.B      '!, Å ',$DE,$80,'@' 
       DC.B      $C0,'?',$00,$00,$AE,'Mf',$C3
       DC.B      'g',$E2,$09,'yO(p',$E7
       DC.B      $80,$1F,$01,$FF,$8E,$00,$80,$00 
       DC.B      '"',$00,$F4,$00,',',$00,$C8,$00 
       DC.B      $F0,$00,$00,$00,$F4,'`',$08,$1F 
-      DC.B      $1B,'ÔøΩG7',$97,$D2,'O',$E4 
+      DC.B      $1B,'éG7',$97,$D2,'O',$E4 
       DC.B      '?',$F8,'@',$80,'>',$00,$BF,$7F 
       DC.B      $1C,$08,$00,$19,$00,',',$00,$1B 
       DC.B      $00,$07,$00,$00,$81,$C0,'a',$C0 
@@ -7247,7 +7207,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $0F,$E0,$00,$00,$07,$80,$00,$7F 
       DC.B      $BA,'/',$9E,$E4,')Hg',$8F 
       DC.B      $1F,$F0,$00,$00,$07,$C0,$F8,$00 
-      DC.B      $8B,$92,'RÔøΩ6b',$F1,$FB
+      DC.B      $8B,$92,'Rî6b',$F1,$FB
       DC.B      $0F,$FC,$03,$00,$03,$1C,$03,$0D 
       DC.B      $CB,$BC,$BF,$BC,$1B,$C3,$0F,$FF 
       DC.B      $07,$FF,$00,$00,'Y',$00,$C7,$00 
@@ -7273,7 +7233,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $C0,'?',$01,$FF,'8',$00,$06,$00 
       DC.B      $A2,$00,$F4,$00,',',$00,$C8,$00 
       DC.B      $F0,$00,$00,$00,$84,'O|?' 
-      DC.B      $16,$CD,$B7,'H#ÔøΩo',$EC
+      DC.B      $16,$CD,$B7,'H#öo',$EC
       DC.B      $1F,$F0,$C0,$00,$00,$FF,$00,$FF 
       DC.B      '%',$08,$06,'8',$18,$12,$00,$09 
       DC.B      $00,$07,$00,$00,$BF,$1F,$F0,$00 
@@ -7325,7 +7285,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FC,$0C,$00,$03,$C0,'<',$FF,$C0 
       DC.B      'zD',$0A,$E8,$D1,'X7',$90 
       DC.B      $0F,$E0,$80,$00,$01,$E0,$7F,$E0 
-      DC.B      'UÔøΩO',$A8,$14,'O3',$F0
+      DC.B      'UûO',$A8,$14,'O3',$F0
       DC.B      $0F,$FF,$00,$00,$01,$F0,$01,$FF 
       DC.B      $05,',',$03,'x',$FF,$0A,$00,$F3 
       DC.B      $FF,$FC,$03,$00,$03,$27,$FF,$1C 
@@ -7409,7 +7369,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $03,$FF,$00,$00,$00,'|',$FF,$80 
       DC.B      '?>',$91,$8E,$DF,'t',$1F,$07
       DC.B      $E0,$F8,$06,$00,$06,'I',$06,'8' 
-      DC.B      'GxÔøΩx',$DF,$87,'7',$FF
+      DC.B      'Gxéx',$DF,$87,'7',$FF
       DC.B      $0F,$FF,$00,$00,$C4,$00,$DC,$00 
       DC.B      '<',$00,$03,$FF,$FF,$FF,$FF,$FF 
       DC.B      $FF,$FF,'@',$00,'@',$00,'@',$00 
@@ -7429,7 +7389,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      $FF,$FF,$0F,$E0,'`',$05,$E0,$0C 
       DC.B      '`',$18,'@',$1E,$D0,$0A,'`',$06 
       DC.B      $80,$01,$00,$00,'R',$8D,$CE,'D' 
-      DC.B      'ÔøΩmb',$C6,$03,'}',$03,$83 
+      DC.B      'ômb',$C6,$03,'}',$03,$83 
       DC.B      $FC,$00,$00,$1F,$93,$80,'p`'
       DC.B      $C6,$80,$F3,$00,$E4,$00,$F8,$00 
       DC.B      $00,$00,$80,$00,'xt',$07,$F3
@@ -7757,7 +7717,7 @@ possible_picture_data:DCB.W     4,0
       DC.B      ' i',$E3,$D8,$E0,'8',$E0,$07
       DC.B      $1F,$FF,$00,$02,$8D,$93,'Dr'
       DC.B      $91,'?',$13,$0F,$10,$FF,$EF,$FF 
-      DC.B      $FF,$FF,$00,$01,'ÔøΩy~',$07 
+      DC.B      $FF,$FF,$00,$01,'éy~',$07 
       DC.B      'Q',$97,$9F,$8F,$E0,$7F,$FF,$FF 
       DC.B      $FF,$FF,$F8,$00,$F8,'<',$F8,$0C 
       DC.B      $FF,$27,$FF,$D8,$FF,$FF,$FF,$FF 
@@ -9415,7 +9375,7 @@ possible_picture_data:DCB.W     4,0
       DCB.W     4,0 
       DC.B      $FF,$FE,$00,$00,$00,$00,$00,$00 
       DCB.W     4005,0
-ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02 
+L0040:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02 
       DC.B      $01,'t',$01,'t',$03,$E8,$00,'w' 
       DC.B      'XIMG',$00,$00,$03,$E8
       DC.B      $03,$E8,$03,$E8,$01,$02,$00,$C0 
@@ -9671,30 +9631,30 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $D5,'Ww@',$00,$0A,$AA,'k' 
       DC.B      $BB,$00,$03,$AA,$AA,$80,$06,$AB 
       DC.B      'o',$0A,$1D,'T',$80,$07,'d',$80 
-      DC.B      $06,$15,'UUUÔøΩD',$00 
+      DC.B      $06,$15,'UUUîD',$00 
       DC.B      $03,'UU',$80,$04,'T',$90,$F5
       DC.B      '@',$09,'+',$80,$02,'J',$90,$0F 
       DC.B      $80,$07,$10,$00,$04,$91,'T',$88 
       DC.B      $80,$16,$80,$02,$09,'B',$09,$80 
-      DC.B      $06,$95,'WuUÔøΩD',$00 
+      DC.B      $06,$95,'WuUîD',$00 
       DC.B      $03,'UU',$80,$06,'T',$90,$F5
       DC.B      '@ ',$10,$07,'+',$80,$02,'J'
       DC.B      $90,$0F,$80,$07,$10,$00,$04,$91 
       DC.B      'T',$88,$80,$16,$80,$02,$09,'B' 
-      DC.B      $09,$80,$06,$95,'WuUÔøΩ'
+      DC.B      $09,$80,$06,$95,'WuUî'
       DC.B      'D',$00,$03,'UU',$80,$06,'T'
       DC.B      $90,$F5,'@ ',$10,$07,'+',$80
       DC.B      $02,'J',$90,$0F,$80,$07,$10,$00 
       DC.B      $04,$91,'T',$88,$80,$16,$80,$02 
       DC.B      $09,'B',$09,$80,$06,$95,'Wu'
-      DC.B      'UÔøΩD',$00,$03,'UU',$80
+      DC.B      'UîD',$00,$03,'UU',$80
       DC.B      $06,'T',$90,$F5,'@ ',$10,$07
-      DC.B      'd',$80,$06,$15,'UUUÔøΩ'
+      DC.B      'd',$80,$06,$15,'UUUî'
       DC.B      'D',$00,$03,'UU',$80,$04,'T'
       DC.B      $90,$F5,'@',$09,'+',$80,$02,'J' 
       DC.B      $90,$0F,$80,$07,$10,$00,$04,$91 
       DC.B      'T',$88,$80,$16,$80,$02,$09,'B' 
-      DC.B      $09,$80,$06,$95,'WuUÔøΩ'
+      DC.B      $09,$80,$06,$95,'WuUî'
       DC.B      'D',$00,$03,'UU',$80,$06,'T'
       DC.B      $90,$F5,'@ ',$10,$07,$08,$80
       DC.B      $0C,$88,$89,$11,'DDDD'
@@ -9795,7 +9755,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '@',$04,$80,$11,$80,$09,$80,$08 
       DC.B      $00,$80,$01,'E',$00,$AB,'e',$00 
       DC.B      $06,'UU',$80,$08,'QmT'
-      DC.B      'ÔøΩH(',$89,'$',$15,$80,$0F 
+      DC.B      'ÑH(',$89,'$',$15,$80,$0F 
       DC.B      $80,$04,'P',$C4,'U',$D7,'UU'
       DC.B      '[%*',$B6,$DF,$FD,$DF,$8B 
       DC.B      $80,$05,$FD,$D5,'\',$00,'@',$06 
@@ -9803,7 +9763,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $01,$00,$10,$00,$04,$00,'@',$04 
       DC.B      $80,$11,$80,$09,$80,$08,$00,$80 
       DC.B      $01,'E',$00,$AB,'e',$00,$06,'U' 
-      DC.B      'U',$80,$08,'QmTÔøΩH' 
+      DC.B      'U',$80,$08,'QmTÑH' 
       DC.B      '(',$89,'$',$15,$80,$10,$80,$04 
       DC.B      'P',$C4,'U',$D7,'UU[%'
       DC.B      '*',$B6,$D5,'U',$DF,$DF,$84,$80 
@@ -9813,7 +9773,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $00,$04,$00,'@',$04,$80,$11,$80 
       DC.B      $09,$80,$08,$00,$80,$01,'E',$00 
       DC.B      $AB,'e',$00,$06,'UU',$80,$08
-      DC.B      'QmTÔøΩH(',$89,'$'
+      DC.B      'QmTÑH(',$89,'$'
       DC.B      $15,$80,$11,$80,$04,'P',$C4,'U' 
       DC.B      $D7,'UU[%*',$B6,$DA 
       DC.B      $A8,$8A,$A8,$02,$03,$80,$0B,$97 
@@ -9827,7 +9787,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $10,$01,$00,$10,$00,$04,$00,'@' 
       DC.B      $04,$80,$11,$80,$09,$80,$08,$00 
       DC.B      $80,$01,'E',$00,$AB,'e',$00,$06 
-      DC.B      'UU',$80,$08,'QmTÔøΩ' 
+      DC.B      'UU',$80,$08,'QmTÑ' 
       DC.B      'H(',$89,'$',$15,$80,$11,$80
       DC.B      $04,'P',$C4,'U',$D7,'UU[' 
       DC.B      '%*',$B6,$DA,$A8,$8A,$A8,$02
@@ -9872,7 +9832,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $09,'$',$92,'@$',$92,'H',$04
       DC.B      $A0,'J',$08,'$',$12,$AD,'U_'
       DC.B      $8C,$80,$09,$FE,$92,$AA,'Ut'
-      DC.B      'ÔøΩ@',$00,$80,$03,$80,$02,$92
+      DC.B      'Ñ@',$00,$80,$03,$80,$02,$92
       DC.B      'H',$03,$80,$02,$92,'H',$07,$80 
       DC.B      $0D,$12,'I$',$12,')',$0D,'V'
       DC.B      $88,$88,$88,$AA,$AA,$DB,$91,$80 
@@ -9883,7 +9843,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '$',$92,'H',$04,$A0,'J',$08,'$' 
       DC.B      $12,$AD,'U[',$DF,$FB,$AE,$FF
       DC.B      $EA,$B7,$EA,$AF,$BF,$AE,$BA,$AB 
-      DC.B      $DE,$92,$AA,'UtÔøΩ@',$00
+      DC.B      $DE,$92,$AA,'UtÑ@',$00
       DC.B      $80,$03,$80,$02,$92,'H',$03,$80 
       DC.B      $02,$92,'H',$07,$80,$0E,$12,'I' 
       DC.B      '$',$12,')',$0D,'V',$88,$88,$88 
@@ -9897,7 +9857,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'J',$08,'$',$12,$AD,'U\*' 
       DC.B      'UURUh',$15,'U@'
       DC.B      'QUT.',$92,$AA,'Ut' 
-      DC.B      'ÔøΩ@',$00,$80,$03,$80,$02,$92
+      DC.B      'Ñ@',$00,$80,$03,$80,$02,$92
       DC.B      'H',$03,$80,$02,$92,'H',$07,$80 
       DC.B      $0E,$12,'I$',$12,')',$0D,'V'
       DC.B      $88,$88,$88,$AA,$AA,$DB,$A5,$03 
@@ -9916,7 +9876,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'H',$04,$A0,'J',$08,'$',$12,$AD 
       DC.B      'U\*UURUh'
       DC.B      $15,'U@QUT.',$92
-      DC.B      $AA,'UtÔøΩ@',$00,$80,$03
+      DC.B      $AA,'UtÑ@',$00,$80,$03
       DC.B      $80,$02,$92,'H',$03,$80,$02,$92 
       DC.B      'H',$07,$80,$0E,$12,'I$',$12
       DC.B      ')',$0D,'V',$88,$88,$88,$AA,$AA 
@@ -10672,7 +10632,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $8A,$B7,$87,$80,$01,$EA,$85,$80 
       DC.B      $02,$86,'(',$04,$05,$80,$27,$17 
       DC.B      $7F,$90,'/',$FF,$FF,$7F,'P',$00 
-      DC.B      $00,'?ÔøΩ^',$D2,$DA,$A0,' ' 
+      DC.B      $00,'?Å^',$D2,$DA,$A0,' ' 
       DC.B      $00,$03,'{',$FF,$DD,$01,$1B,$FF 
       DC.B      $FF,$FD,'UU',$7F,$FF,$DA,$81
       DC.B      $11,'~',$FF,$FF,$FE,$C0,$07,$80 
@@ -11215,7 +11175,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $C0,$08,$01,$00,$F9,$FF,$B6,$A1 
       DC.B      $8D,'R',$AF,$00,$00,$AF,$D0,$00 
       DC.B      $0F,$FC,$00,$05,$A0,$7F,$AA,'Y' 
-      DC.B      'ÔøΩT',$05,$14,$00,$D4,$B1,'^'
+      DC.B      'ÅT',$05,$14,$00,$D4,$B1,'^'
       DC.B      $17,$F7,$00,$02,$FD,'@',$1F,$FF 
       DC.B      $FC,$03,$80,$0E,$06,$7F,$FF,'@' 
       DC.B      $00,$80,$9A,$F0,'P',$00,$0A,$AF 
@@ -11510,7 +11470,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      ':',$AA,$00,'"',$E8,'!',$99,$88 
       DC.B      $00,'A',$0C,$98,$00,$7F,$B7,'z' 
       DC.B      '* ',$01,$FD,$00,$05,$01,'T'
-      DC.B      $09,'*ÔøΩP',$94,$C8,$00,$09 
+      DC.B      $09,'*ûP',$94,$C8,$00,$09 
       DC.B      'T',$00,'@B',$FF,$FC,$00,'_'
       DC.B      $FD,'@',$00,'P',$00,$14,$97,$09 
       DC.B      'w',$FF,$FF,$FE,$FA,'@',$7F,$AF 
@@ -11616,7 +11576,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $00,$00,$D7,$E2,$AE,$A4,'V',$10 
       DC.B      $00,$0D,$FF,$FF,'m',$B6,$A8,'V' 
       DC.B      $DC,'hB',$D0,$00,$00,'!D' 
-      DC.B      $00,'yÔøΩu',$C0,$0B,$A8,$06 
+      DC.B      $00,'yîu',$C0,$0B,$A8,$06 
       DC.B      $80,$05,$10,$0E,'p?w',$83 
       DC.B      $80,$03,$CD,'R',$00,$03,$80,$02 
       DC.B      $02,'@',$04,$80,$02,$01,'@',$05 
@@ -11720,7 +11680,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $7F,$84,$80,$1C,'~',$DF,$A8,'W' 
       DC.B      $FF,$1F,'H',$BA,$05,$E8,$00,$00 
       DC.B      $97,$FE,'O',$FF,$F5,$FF,$FF,'T' 
-      DC.B      'ÔøΩ',$7F,$D0,$8B,'`',$07,$D2,$10 
+      DC.B      'Ñ',$7F,$D0,$8B,'`',$07,$D2,$10 
       DC.B      $0E,$80,$09,$17,$E7,$FF,$FA,$01 
       DC.B      'U',$86,'_',$D0,$09,$80,$08,$03 
       DC.B      $83,'.o',$F8,'}',$FF,$DF,$86
@@ -11877,7 +11837,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $E5,$FF,$FF,'D',$89,'%+',$D0
       DC.B      $00,$00,$14,$27,'H',$00,'_',$FB 
       DC.B      'P',$00,'8',$00,'A',$80,$00,$E1 
-      DC.B      $27,$01,'.@ÔøΩN',$0C,$83
+      DC.B      $27,$01,'.@ÅN',$0C,$83
       DC.B      $C1,'o',$00,$00,$14,$A9,'$',$80 
       DC.B      $00,$00,$01,'+WjD',$AD
       DC.B      $FF,$C8,$03,$80,'#',$01,'/',$FF 
@@ -13099,7 +13059,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $1C,$01,$F8,$BF,$DD,$85,$01,$E4 
       DC.B      $00,$06,'`',$DF,$FF,$DF,$FF,$FF 
       DC.B      $FE,$90,$00,$03,$80,'z',$B5,'4' 
-      DC.B      'h',$1F,$A7,$89,$80,'@ÔøΩ3' 
+      DC.B      'h',$1F,$A7,$89,$80,'@î3' 
       DC.B      $D5,'+',$11,'/',$FC,$01,$D1,$FD 
       DC.B      $8D,'v',$DD,'T',$9B,$C0,'x',$00 
       DC.B      '-',$07,$EC,'X',$BF,'I',$00,$27 
@@ -13108,7 +13068,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $84,$02,$EE,$15,$95,$A4,')',$1D 
       DC.B      $FC,$BB,$D0,'7k',$8F,$FD,'*'
       DC.B      'St(> ',$00,'7',$1A 
-      DC.B      $BC,$FF,'zÔøΩ_',$DF,$FF,'o' 
+      DC.B      $BC,$FF,'zÅ_',$DF,$FF,'o' 
       DC.B      $FF,$EA,$9A,$BF,$17,'_',$CB,$FF 
       DC.B      $B2,'W9',$FF,$CC,'^',$8C,$DA
       DC.B      $F0,$EB,'UC',$83,$7F,$D8,$0E
@@ -13304,7 +13264,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'r',$FC,'C',$7F,$B9,':',$BF,$83 
       DC.B      $80,'On',$07,$DF,$FF,$FF,'u'
       DC.B      '@?',$E1,'7',$BF,$FF,$FF,$FC
-      DC.B      'ÔøΩs',$B5,'S`',$01,$EE,$FE 
+      DC.B      'és',$B5,'S`',$01,$EE,$FE 
       DC.B      $80,$00,'/',$E8,$03,$EF,$B9,$82 
       DC.B      $82,'$',$01,'o',$FA,'g~',$CF
       DC.B      $04,'J',$BE,$8D,$15,$B8,'@:'
@@ -13382,7 +13342,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $F7,$FC,$83,$80,'I',$FE,$03,'_' 
       DC.B      $BF,$FF,$FB,'o',$A3,$96,$E3,'2' 
       DC.B      $0A,$AB,$FA,$AD,$AE,'9',$00,'7' 
-      DC.B      $08,'TÔøΩ9',$00,$08,$05,$B9 
+      DC.B      $08,'TÅ9',$00,$08,$05,$B9 
       DC.B      $F3,$D5,$FF,$F7,$B1,$E8,$E5,$FF 
       DC.B      $FD,$CB,'\',$FE,$DF,'?',$F4,$FE 
       DC.B      $EF,$ED,$E5,$FE,$C8,$B5,$AE,$F1 
@@ -13417,13 +13377,13 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $A7,$FF,$C5,$CF,$B3,$DF,$F9,'_' 
       DC.B      $E1,$C7,$D9,'5',$00,$01,$EA,$80 
       DC.B      $A1,$B5,$0A,'%',$96,$E7,$D8,'?' 
-      DC.B      'ÔøΩ<',$07,'k',$E8,$7F,$FF,$FF
+      DC.B      'Ñ<',$07,'k',$E8,$7F,$FF,$FF
       DC.B      $EC,$80,$02,$80,'{',$04,$AF,$DB 
       DC.B      $00,$FF,$FF,$C3,$FB,$FF,$CD,$C7 
       DC.B      $9F,$A4,$15,$08,$02,'J|',$88
       DC.B      $A3,'=',$F6,$00,$D8,$C7,$D3,$00 
       DC.B      '6',$A0,$0D,$C0,$01,'Y',$82,$85 
-      DC.B      'ÔøΩ5',$F5,'y',$93,$BF,$FF,$FF
+      DC.B      'é5',$F5,'y',$93,$BF,$FF,$FF
       DC.B      $FE,$D7,$00,$BF,$DF,$FE,$EE,$00 
       DC.B      $AF,' ',$FC,$DA,$AB,$FF,$FE,$D1 
       DC.B      $A3,$FB,$C2,$CC,$01,'E',$14,'@' 
@@ -13560,14 +13520,14 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $1F,'=',$F3,$E0,$BF,$FE,'&b'
       DC.B      $14,$0D,'g(b',$E5,$15,$FE 
       DC.B      $99,$1C,$C0,$8E,$80,$0E,'5',$A9 
-      DC.B      $00,$12,$1D,$F9,'jÔøΩJ',$9E 
+      DC.B      $00,$12,$1D,$F9,'jûJ',$9E 
       DC.B      $88,$A3,$90,$02,$AF,'L*',$83
       DC.B      $80,'J',$FC,$9C,$97,'U',$FF,$DD 
-      DC.B      'ÔøΩ+',$15,'e?',$FF,$FF,$B9 
+      DC.B      'ö+',$15,'e?',$FF,$FF,$B9 
       DC.B      $0F,$E6,$FF,$F6,'g',$FD,$8E,$D0 
       DC.B      $FF,$FF,$F6,$AA,'(',$D4,'[',$AF 
-      DC.B      $27,'ÔøΩ/ÔøΩ0',$92,'jÔøΩ' 
-      DC.B      'cX',$7F,$0A,'Jh,ÔøΩ' 
+      DC.B      $27,'û/Å0',$92,'jî' 
+      DC.B      'cX',$7F,$0A,'Jh,û' 
       DC.B      '7|v',$C3,$07,$10,$BF,$AC 
       DC.B      $F1,$9F,$27,$EE,$01,$08,$0F,$B1 
       DC.B      $0A,' ^J+ ',$FF,'A' 
@@ -13617,7 +13577,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $A0,$E7,$FF,$BB,$F7,$FD,$D0,$C1 
       DC.B      $CF,$BC,$B6,$EF,'ZB',$F2,$FB
       DC.B      $DE,$11,$A4,$09,$FE,'E5',$DF
-      DC.B      $A1,$B5,$D4,$DB,$05,$BD,'ÔøΩ',$7F 
+      DC.B      $A1,$B5,$D4,$DB,$05,$BD,'ö',$7F 
       DC.B      $7F,$ED,$7F,$FF,'^',$10,$00,$03 
       DC.B      $80,'(J',$00,$02,$00,$03,$FB
       DC.B      $F8,'7',$FD,$FA,$F2,$94,$F5,$9F 
@@ -13675,7 +13635,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $08,':',$EB,$FF,$A8,'g',$BC,'Y' 
       DC.B      $9E,$11,$05,$A5,$17,$27,$CC,$C9 
       DC.B      $EE,':">',$DE,$1A,'D',$87 
-      DC.B      $0D,'ÔøΩ{',$BE,'@',$07,$02,$19
+      DC.B      $0D,'ö{',$BE,'@',$07,$02,$19
       DC.B      $02,$9E,$05,$FF,$80,'+',$FB,$B3 
       DC.B      $87,'6t',$C2,$E3,'$',$F0,'x'
       DC.B      $1F,$FC,' ',$7F,$D0,']J',$11
@@ -13739,7 +13699,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$CD,$D7,$00,$1B,$F6,';|'
       DC.B      $F6,'m',$8B,$B9,$EF,$EA,$FF,$D2 
       DC.B      $E4,$1F,']',$FF,$CA,$95,$F7,$B3 
-      DC.B      $EF,'vt',$C2,$FF,'<',$FC,'ÔøΩ'
+      DC.B      $EF,'vt',$C2,$FF,'<',$FC,'é'
       DC.B      '3',$8C,'?o',$FB,$FF,$FF,$EE
       DC.B      $CA,'P',$03,$80,'s',$04,$00,$02 
       DC.B      $08,'?',$FB,$FD,$DF,$FD,$DA,'F' 
@@ -13883,7 +13843,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $06,$80,$0A,$1E,$00,'@',$00,'?' 
       DC.B      $FF,$C0,$00,$7F,$80,$04,$80,$05 
       DC.B      '@',$03,$F0,$00,'?',$83,$80,$1E 
-      DC.B      $FC,$00,$0E,'ÔøΩ@',$B8,$00,'~'
+      DC.B      $FC,$00,$0E,'ö@',$B8,$00,'~'
       DC.B      $06,$00,$1F,$FF,$FF,$F4,$00,$00 
       DC.B      $7F,$C0,$07,$F8,$00,$00,$0F,$FF 
       DC.B      $FE,$00,$0F,$F8,$00,' ',$03,$80 
@@ -13934,7 +13894,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '"',$AC,$07,$0A,$7F,$D7,$17,$FF 
       DC.B      $BE,'US',$FF,$FE,$A2,$18,$D9
       DC.B      'K',$05,$84,'% ',$C1,$13,$08
-      DC.B      $17,'WRS~ÔøΩV',$CF
+      DC.B      $17,'WRS~öV',$CF
       DC.B      $18,'V',$0F,$F6,$BD,'K',$8A,'#' 
       DC.B      '98d',$BA,$8F,$B0,$81,$E4 
       DC.B      $05,'`O',$BA,$80,$E2,$02,$9B
@@ -14057,9 +14017,9 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $E1,$FF,$FF,$E8,$08,'+',$B8,'k' 
       DC.B      $F6,$9B,'.@',$1E,$E5,'H',$81
       DC.B      $AA,$C3,$BE,$E2,')',$11,$CD,'M' 
-      DC.B      $ED,'qbÔøΩo',$FD,$C1,$80
+      DC.B      $ED,'qbûo',$FD,$C1,$80
       DC.B      'M',$03,$8E,$C0,$01,$EF,$10,$EE 
-      DC.B      $1F,$F4,$CC,$E6,$D4,$02,$7F,'ÔøΩ' 
+      DC.B      $1F,$F4,$CC,$E6,$D4,$02,$7F,'Å' 
       DC.B      '/]',$19,'P',$05,$02,$80,$0A
       DC.B      $09,$1F,$FF,$E7,$18,$00,$00,'}' 
       DC.B      'Z',$04,$03,$80,'n',$01,$FC,$C0 
@@ -14077,7 +14037,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$EE,$0F,$FF,$F7,$E7,$FA,$1D 
       DC.B      $80,$03,$8F,']',$FF,$BE,$FF,$FF 
       DC.B      $FB,'P',$00,$02,$80,'{',$09,$1B 
-      DC.B      'AGZ',$01,$00,'FÔøΩ}' 
+      DC.B      'AGZ',$01,$00,'Fî}' 
       DC.B      $FF,$FE,'w',$FE,$04,$9A,$BD,'?' 
       DC.B      $FE,$F9,$AF,$DC,$F7,'_',$B9,'5' 
       DC.B      $F7,$E2,$17,$CF,$E4,$FF,$FD,$FF 
@@ -14120,7 +14080,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '%',$C6,$95,$E9,'ge',$FE,$F1
       DC.B      $1A,$BE,':e=',$D6,$04,$D6 
       DC.B      $EB,$92,$B2,$12,$EF,$BD,'l',$88 
-      DC.B      $82,$90,$1F,$BE,'ÔøΩo',$7F,$FE
+      DC.B      $82,$90,$1F,$BE,'öo',$7F,$FE
       DC.B      'U',$00,$F0,$1F,$FA,$E8,$EE,$90 
       DC.B      $08,$F9,$84,$00,$A8,$07,$02,$80 
       DC.B      $08,$09,$1D,$BF,$FF,'_',$FF,$FF 
@@ -14212,7 +14172,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '=',$E6,$84,$80,'(',$F7,$09,$9F 
       DC.B      $F9,$00,$80,$1F,$FB,$FD,'w',$AD 
       DC.B      $00,$93,$FF,$FF,$FC,$10,$88,'/' 
-      DC.B      $FE,'!',$B2,'@ÔøΩ8',$00,'`' 
+      DC.B      $FE,'!',$B2,'@é8',$00,'`' 
       DC.B      $F1,'-%',$09,$C7,$83,$FB,$27
       DC.B      $01,$7F,$AD,'J@',$03,$80,'V'
       DC.B      'E',$BE,$E7,$0A,$A5,$00,$07,$7F 
@@ -14268,7 +14228,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $85,$1D,$16,$B5,'!',$80,$03,$80 
       DC.B      $1E,$03,$E6,$08,$00,$00,'{',$96 
       DC.B      $82,'Lcz',$09,$E4,'qA'
-      DC.B      $1F,'P#X',$06,'ÔøΩs',$BC
+      DC.B      $1F,'P#X',$06,'ös',$BC
       DC.B      $8C,$A0,$09,$89,$1B,$F0,$B0,$03 
       DC.B      $80,$05,$01,'s',$EA,'P<',$03
       DC.B      $80,$01,$0B,$83,$80,'"',$FB,$FD 
@@ -14506,7 +14466,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$F9,$AB,$08,'H',$00,$00,$85 
       DC.B      $9E,$BA,'m',$00,$10,$EE,$12,$FC 
       DC.B      '+',$BE,'D',$83,$FF,$DF,$FF,'_' 
-      DC.B      'ÔøΩT',$19,$04,$80,$1E,$02,$05
+      DC.B      'öT',$19,$04,$80,$1E,$02,$05
       DC.B      $C0,$02,'H\',$08,'R',$00,'s'
       DC.B      $F0,$D4,$03,'"',$90,$1D,'T>'
       DC.B      $00,'^?F',$01,$84,$A0,'U' 
@@ -14566,7 +14526,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '- ',$F9,'/',$F2,$0A,$AA,$BB
       DC.B      $B7,$9C,$03,$FF,$C3,'y',$BE,$B2 
       DC.B      $FA,'k',$C5,$F7,$DB,'U%P' 
-      DC.B      'ÔøΩx',$AE,$B6,$DA,$FF,$F6,$A6
+      DC.B      'ôx',$AE,$B6,$DA,$FF,$F6,$A6
       DC.B      $AF,$DF,$7F,$FF,'n',$D7,$FE,$91 
       DC.B      $9E,$E7,$FF,$D4,$03,$16,$BF,$E7 
       DC.B      $94,'w',$F8,'[',$BF,$8F,'5',$DB 
@@ -14635,7 +14595,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $0C,'QP',$00,$00,$02,'U',$FF
       DC.B      $FF,$B5,'Zh',$03,$97,$F2,$C0
       DC.B      $8D,$F7,$AF,$FA,$FE,$93,$AD,'@' 
-      DC.B      'ÔøΩl?',$FF,$FF,$B6,$8A,$02 
+      DC.B      'Ål?',$FF,$FF,$B6,$8A,$02 
       DC.B      $10,'/',$E0,$0B,$81,$E9,$E8,'?' 
       DC.B      $FF,$BA,$90,$00,$02,$80,')',$01 
       DC.B      '+',$FE,$0F,$FC,$1F,$F5,$FF,'~' 
@@ -14667,7 +14627,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $83,'P/',$DD,$F7,$BF,$0B,$A3
       DC.B      $FE,$16,$C0,'|',$93,$83,$80,$0A 
       DC.B      $B6,$CF,$F8,'O',$FF,$C0,$BB,$CD 
-      DC.B      'ÔøΩ|',$05,$01,$80,'*',$01,'J'
+      DC.B      'é|',$05,$01,$80,'*',$01,'J'
       DC.B      $DF,$FF,$8F,$E0,$00,$0D,$FD,'~' 
       DC.B      '0@',$1F,$EA,$82,$88,$10,$01
       DC.B      'CuU',$10,$01,'V',$00,'<' 
@@ -14750,7 +14710,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $80,$0A,$D3,'*',$FE,'7',$80,$00 
       DC.B      '*',$00,$02,$DB,$03,$80,'J',$04 
       DC.B      $D9,$BF,$01,'8U',$7F,$D9,$8A
-      DC.B      $E9,$E7,'A',$B7,'ÔøΩAt',$E3 
+      DC.B      $E9,$E7,'A',$B7,'éAt',$E3 
       DC.B      's ',$A1,$96,$F8,$0D,$C9,$E9
       DC.B      $80,$00,$15,$07,$B7,$03,$12,$FC 
       DC.B      ')0',$00,$AB,$FF,$F3,$13,$A5
@@ -14758,10 +14718,10 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FB,$FE,'!',$94,$81,$C9,$B6,$AA 
       DC.B      $AA,$FA,$04,'|',$11,$14,'_',$E6 
       DC.B      $07,'A',$E9,$EA,'_',$FF,$ED,'D' 
-      DC.B      $00,$03,$80,'(',$7F,'|',$1E,'ÔøΩ' 
+      DC.B      $00,$03,$80,'(',$7F,'|',$1E,'é' 
       DC.B      '?',$EB,$9F,$F7,$CB,$C0,$00,$09 
       DC.B      $FF,$FA,'!)',$A0,$92,$16,'J'
-      DC.B      'fÔøΩh',$CC,$88,$1F,$B5,'v' 
+      DC.B      'föh',$CC,$88,$1F,$B5,'v' 
       DC.B      $1B,$F7,$E8,'C`',$00,$00,'x'
       DC.B      $D2,$09,$C2,'@',$03,$80,'L!'
       DC.B      '$',$80,'*',$80,'9&>',$DE 
@@ -14907,7 +14867,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '"',$9D,$1F,$FD,$AA,'A',$B9,$C2 
       DC.B      $BE,$07,$0C,$96,$E4,'o_',$FE
       DC.B      $AC,'(',$7F,'Ke',$EE,'X!' 
-      DC.B      '_',$01,$05,'<d*ÔøΩ',$7F
+      DC.B      '_',$01,$05,'<d*Å',$7F
       DC.B      $FF,$FF,$9C,'\',$15,$7F,$F6,$D3 
       DC.B      ';',$C0,')1Z',$FB,$A2,'0' 
       DC.B      $1D,$FF,$84,'5?WT',$80
@@ -14948,7 +14908,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $A1,'}',$FB,$F3,$27,$C6,'}',$8B 
       DC.B      'f',$D0,$0E,'D',$A2,$EB,$E6,$96 
       DC.B      $1F,$00,$94,'$5w',$DB,'?' 
-      DC.B      'Qa',$A7,'NÔøΩ?',$F8,$B2
+      DC.B      'Qa',$A7,'Nô?',$F8,$B2
       DC.B      $BF,$E8,$05,'@',$85,'I',$FF,$80 
       DC.B      '>',$A0,$15,'[',$C1,$83,$13,$FF 
       DC.B      ' ',$00,$7F,'#',$AF,$97,$DF,'3' 
@@ -15012,7 +14972,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $AF,$A4,$00,$00,$12,$08,$02,'{' 
       DC.B      '@',$04,$80,'K.`',$00,$00 
       DC.B      $04,$A4,$BC,$AB,$1A,$10,'G',$FF 
-      DC.B      '"',$1C,'XjÔøΩ#',$FD,$C9
+      DC.B      '"',$1C,'Xjî#',$FD,$C9
       DC.B      $ED,$B8,$8F,$FB,$87,$B7,'e',$92 
       DC.B      'g=',$FC,$D6,$BF,'e',$06,$C0
       DC.B      $9F,'10',$FF,$F4,$A1,';',$F8
@@ -15022,7 +14982,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $0E,$FF,'M?',$E0,'%',$A0,$03
       DC.B      $03,$80,'u',$01,$CB,$CF,$C3,$FF 
       DC.B      $E9,'~3',$E0,$10,$01,$14,$A0
-      DC.B      $99,$27,'ÔøΩZ',$EE,$E7,$7F,$95
+      DC.B      $99,$27,'ûZ',$EE,$E7,$7F,$95
       DC.B      $F2,$93,'5',$AC,$F0,'4',$9E,$D7 
       DC.B      $00,'X~',$08,'%BmS' 
       DC.B      $D8,$9D,$AD,'W',$EA,$FF,$FD,$C2 
@@ -15113,7 +15073,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $7F,$FF,$F0,$01,$00,$0B,$83,$80 
       DC.B      $01,$E3,$85,$80,$03,$D6,$A0,$00 
       DC.B      $01,$80,'"',$09,'[',$F0,$E3,$8F 
-      DC.B      $01,$FA,' C',$7F,'bÔøΩ>'
+      DC.B      $01,$FA,' C',$7F,'bÑ>'
       DC.B      $13,$FE,'d',$D2,$B8,$80,$D3,']' 
       DC.B      $16,'V',$0F,$00,$A2,'`',$87,$B9 
       DC.B      $97,$EF,$FE,$83,'y',$83,$80,'W' 
@@ -15151,7 +15111,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $06,$03,$E6,$B4,$9F,$FA,$BD,$00 
       DC.B      $07,'B',$FA,$BF,$F7,$FF,$A5,$81 
       DC.B      '[',$00,$E2,$8B,$FC,'}',$1F,$DC 
-      DC.B      $C0,'9ÔøΩ5',$D5,'A',$8F,$9F 
+      DC.B      $C0,'9î5',$D5,'A',$8F,$9F 
       DC.B      $FF,'"',$14,'Xm',$B1,$FA,'u'
       DC.B      'y{',$E0,$05,$10,'Jt',$90 
       DC.B      $1F,$FF,$FE,'w',$B4,$15,$FF,$F0 
@@ -15215,7 +15175,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$F9,$1A,'|',$E4,$BD,'|' 
       DC.B      $EF,$FB,$B6,$9C,'#',$AF,$E2,'i' 
       DC.B      '#',$12,$BE,$B0,'y',$B4,$F9,$FB 
-      DC.B      $D3,$CA,'B',$D6,$8A,'ÔøΩ:',$FE
+      DC.B      $D3,$CA,'B',$D6,$8A,'ö:',$FE
       DC.B      $D1,$E5,$95,'+o',$9E,$80,$01
       DC.B      $EB,'K',$CA,'=+',$D6,$B4,$BB
       DC.B      $AA,$C9,$DC,$FF,$FC,$01,$17,$8E 
@@ -15269,9 +15229,9 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $17,$FF,$EC,'?',$C0,'*P',$03
       DC.B      $03,$80,'u',$01,$C3,$87,$87,$FB 
       DC.B      ' }',$CF,$D0,$A7,$06,$09,'n'
-      DC.B      'ÔøΩF<7',$BD,'z',$EF,'-'
-      DC.B      $B6,$CC,'t*r',$11,'ÔøΩ$'
-      DC.B      '(-',$EE,$02,$AD,'$ÔøΩq'
+      DC.B      'ÑF<7',$BD,'z',$EF,'-'
+      DC.B      $B6,$CC,'t*r',$11,'ö$'
+      DC.B      '(-',$EE,$02,$AD,'$öq'
       DC.B      $83,$9D,$90,'/',$E5,$D0,$15,'A' 
       DC.B      $A6,$D0,'(<>',$AB,$90,$01 
       DC.B      $00,$A1,':',$10,$BE,$0D,$00,'!' 
@@ -15311,7 +15271,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'p',$04,'o',$DF,'V',$DF,$FB,$FE 
       DC.B      'h',$0F,$E8,$0F,$BD,$D6,$A4,$8F 
       DC.B      $FD,$D3,'o',$8F,$FF,$1B,$FB,':' 
-      DC.B      '`',$1D,$DA,'ÔøΩ-',$14,'%R' 
+      DC.B      '`',$1D,$DA,'ö-',$14,'%R' 
       DC.B      $BC,'Zh',$D2,$D6,'H',$F0,$E1
       DC.B      $F3,$BF,$80,$AF,$BA,$A0,$00,$01 
       DC.B      $80,'|',$04,$A7,$FF,$FF,$8F,$80 
@@ -15487,7 +15447,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $C8,'v',$08,'S=',$CB,$98,$00
       DC.B      $0B,$91,' 1',$C2,'W',$EC,$18
       DC.B      '?',$EB,$F2,$E7,$FE,$D0,$99,$FF 
-      DC.B      $FE,$8B,$E3,'ÔøΩ^',$1E,'Uj' 
+      DC.B      $FE,$8B,$E3,'ö^',$1E,'Uj' 
       DC.B      $AF,$FF,$FF,'H',$9F,$FF,$FF,$FC 
       DC.B      $85,'1',$C2,'A',$C8,'p',$0A,$1E 
       DC.B      $F6,$86,$A0,'%0',$03,$F6,$95
@@ -15585,7 +15545,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $9F,$FF,$DF,'kz>?',$BF
       DC.B      '7',$97,$FE,$C1,$0B,$B5,$9B,$DF 
       DC.B      'k',$FB,$B5,$0A,$FF,$E6,'o',$FE 
-      DC.B      $EA,$FD,'&oÔøΩ',$7F,$DE,$13 
+      DC.B      $EA,$FD,'&oô',$7F,$DE,$13 
       DC.B      $8A,$D4,$D1,$FA,'~',$ED,$A8,$01 
       DC.B      $FF,$FB,$C9,'T',$15,'^Y',$C2
       DC.B      $1A,$EE,$DF,'-',$90,$DC,$00,'j' 
@@ -15822,7 +15782,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'x',$FE,$0F,$DB,'>',$A2,$CE,$EB 
       DC.B      'a7v',$1C,$07,'v',$85,$BD 
       DC.B      $B8,$09,$81,$F7,$FD,$17,'P',$1A 
-      DC.B      $19,'ÔøΩ>',$9F,$E3,$FF,$FE,$ED
+      DC.B      $19,'é>',$9F,$E3,$FF,$FE,$ED
       DC.B      ' ',$00,$05,$80,$0E,$E2,'=',$DF 
       DC.B      $FF,$B4,$F9,$BD,$1F,'=',$D8,$13 
       DC.B      $81,$A8,$EB,$83,$80,'`',$FC,'v' 
@@ -15890,7 +15850,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '^',$AD,$EE,$01,$16,$E4,'U',$0D 
       DC.B      $FF,$12,$CB,$C1,'KG',$B3,$DA
       DC.B      'p',$A0,$03,$80,'I',$02,'`',$00 
-      DC.B      $00,'#`',$C4,$9F,'?ÔøΩ5'
+      DC.B      $00,'#`',$C4,$9F,'?î5'
       DC.B      $E9,$0F,$FC,$A4,'?',$F6,$BE,$FE 
       DC.B      '^*',$05,$B9,$BF,$A3,$13,$EF
       DC.B      $F5,';O',$D2,$EE,$BF,$04,$18
@@ -16009,7 +15969,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $E0,$1F,$F8,')',$F8,$89,$F4,$04 
       DC.B      $03,$80,'(',$07,'f?',$07,$FF
       DC.B      $F0,$DF,$8B,$90,'U',$9F,'t"'
-      DC.B      'ÔøΩgr',$80,')Z',$03,$CD
+      DC.B      'ûgr',$80,')Z',$03,$CD
       DC.B      $BF,$91,$FD,'v+',$04,'t1' 
       DC.B      $E0,'6',$0D,'T',$B6,'\',$1D,$BE 
       DC.B      $F7,'uA',$04,$80,'IR',$E2 
@@ -16042,7 +16002,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $13,$04,$80,$7F,$EF,$F3,$FE,$FF 
       DC.B      '9',$D0,$FE,$AF,'MW',$A5,$E7
       DC.B      'j',$0B,$DD,$C2,$AD,$7F,$7F,'t' 
-      DC.B      $BD,$D5,$FF,$F1,'TÔøΩT',$1D 
+      DC.B      $BD,$D5,$FF,$F1,'TîT',$1D 
       DC.B      $F8,$F9,$9F,$97,$B7,$E0,$11,'@' 
       DC.B      $EB,$FD,'E',$BF,$D7,$D1,'E',$CB 
       DC.B      $CB,$FB,$F5,'?',$ED,'C',$FC,$80 
@@ -16182,7 +16142,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $0A,$0F,$17,'q',$FC,'_',$FF,$F5 
       DC.B      $AE,$FE,$0C,$FA,$96,$FE,$CD,$C7 
       DC.B      '=z',$BB,'diU',$B4,$F5
-      DC.B      $A7,'DGÔøΩP',$80,$B5,'w'
+      DC.B      $A7,'DGöP',$80,$B5,'w'
       DC.B      $FF,$B7,$9A,$DD,$B5,$94,$A5,'$' 
       DC.B      $D5,$15,$1B,'=]',$82,$00,$BF
       DC.B      $80,'6',$F8,$00,$BD,'1',$02,$8D 
@@ -16232,7 +16192,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $02,$BD,$CF,$1D,'2A/<'
       DC.B      'EU',$C7,$A1,$F3,$C0,$11,$F8
       DC.B      $FC,$B3,'8FPJ',$AB,'~'
-      DC.B      $F7,'ATÔøΩ@',$27,$F1,$F0
+      DC.B      $F7,'ATÑ@',$27,$F1,$F0
       DC.B      '?',$EF,'N',$80,$08,$DB,$BF,$F0 
       DC.B      $B1,$E4,$D4,$00,'@',$00,$8A,'|' 
       DC.B      $97,$EC,$97,$90,$A9,'~',$DD,$84 
@@ -16244,7 +16204,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $27,$B5,'s',$1C,$1E,$A7,$C1,$C3 
       DC.B      $F9,$03,$80,'+',$02,$A7,$01,$FF 
       DC.B      $A0,'/',$7F,$FF,$FE,$00,'N',$FF 
-      DC.B      'KÔøΩBY',$E8,$00,$10,$E3
+      DC.B      'KôBY',$E8,$00,$10,$E3
       DC.B      'A?',$EC,$C2,$BD,$A8,$13,$F8
       DC.B      $04,'?',$1D,$87,$C8,$AC,$CF,$B1 
       DC.B      '%/',$FF,$FF,$FC,$B5,$D5,$83
@@ -16264,7 +16224,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $D3,$F5,$B3,$BE,'"Z',$D4,'?'
       DC.B      $F7,$F7,'e/',$FF,$FE,$F7,$F4
       DC.B      '+{',$BF,$FF,$F9,'y',$AF,$C4
-      DC.B      'ÔøΩ `',$01,$1F,$F3,$A6,$0F 
+      DC.B      'é `',$01,$1F,$F3,$A6,$0F 
       DC.B      $FF,$FF,$BF,$FE,$8C,$05,$FF,$ED 
       DC.B      $FB,'nV',$FC,$90,'xg',$F6 
       DC.B      $FF,$F7,$FF,'A~',$F4,$E7,$E0
@@ -16294,7 +16254,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      ';',$FC,'s',$7F,$C3,$FE,$BD,$FD 
       DC.B      'P',$01,$F6,$A0,'1',$FF,'=',$DF 
       DC.B      $F0,'Mu%T',$80,$03,'E'
-      DC.B      'TÔøΩAX',$9F,$DD,$A6,$89
+      DC.B      'TÑAX',$9F,$DD,$A6,$89
       DC.B      'z',$BB,$FF,$A4,'H',$B7,'_',$FB 
       DC.B      ')',$C0,'@',$14,$9F,$BB,'h',$81 
       DC.B      $04,$93,$AF,$02,$7F,$83,$B8,$C9 
@@ -16304,12 +16264,12 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $1E,$92,';',$17,$F1,'z',$F5,$15 
       DC.B      $D5,$BF,$FF,$FF,$BF,$DE,')0'
       DC.B      $13,$B6,'~',$EF,$8C,'|',$0A,'>' 
-      DC.B      'ÔøΩW',$EE,$BF,$1B,$88,$14,$FE
+      DC.B      'éW',$EE,$BF,$1B,$88,$14,$FE
       DC.B      $80,'/',$D5,$D8,'-',$AD,$07,$7F 
       DC.B      $FF,'j',$D8,$19,'H',$FD,$CB,'>' 
       DC.B      '31',$11,$1C,$07,'}@',$03 
       DC.B      $B6,$A0,$C3,'}9S0',$06
-      DC.B      '@',$10,$03,$80,',',$0E,'>ÔøΩ'
+      DC.B      '@',$10,$03,$80,',',$0E,'>Ñ'
       DC.B      '@',$01,$B3,'T6',$AA,'z',$1B
       DC.B      $A9,$FE,$E8,$FC,'Y',$F0,$00,$00 
       DC.B      '@',$05,'k8',$01,$92,'l',$ED
@@ -16521,7 +16481,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $95,'g ',$02,'@',$03,$08,$02
       DC.B      '?',$C0,$A0,'#',$FC,')s',$00
       DC.B      $12,$08,$12,$80,$02,'^@',$11
-      DC.B      $80,$00,'$ÔøΩ&',$89,$0B,$F8 
+      DC.B      $80,$00,'$Å&',$89,$0B,$F8 
       DC.B      $C0,':',$FC,' ',$00,$A0,$0B,$EC 
       DC.B      $91,'w',$FF,$FF,$F7,$FE,'K',$F7 
       DC.B      $BC,$16,$F2,$C2,$A1,',',$80,'g' 
@@ -16594,7 +16554,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $F6,$AA,$80,$00,$80,'}%S' 
       DC.B      $FC,$03,$98,'8',$07,$FF,'@',$0F 
       DC.B      $B2,$1E,$E5,$F9,$E5,$0D,$00,'f' 
-      DC.B      'V',$99,'ÔøΩc',$DF,$A3,$D5,'S'
+      DC.B      'V',$99,'öc',$DF,$A3,$D5,'S'
       DC.B      $A1,'/',$CA,$1B,$B8,';',$E5,'8' 
       DC.B      $DA,'Q',$F0,'.!',$D7,$05,$A4
       DC.B      $D1,$A7,$EF,$A2,$BE,$E0,$F1,$94 
@@ -16602,7 +16562,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '`P',$03,':',$C1,$0E,'o',$F8
       DC.B      'e',$C0,'$VC',$10,'h',$02 
       DC.B      '|0',$1F,'q',$FD,$AA,$C0,$A5
-      DC.B      $9F,'=',$8B,'e',$E2,'ÔøΩB',$CC
+      DC.B      $9F,'=',$8B,'e',$E2,'öB',$CC
       DC.B      '|',$FC,'o',$18,$A8,$02,$8A,'{' 
       DC.B      $C1,$FE,$83,$85,$FF,$D5,$AF,$B4 
       DC.B      ' *E',$C9,$A2,'_?',$E0
@@ -16610,7 +16570,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $B5,$10,$00,$02,$80,'w',$08,$03 
       DC.B      '`v',$F8,$1F,$F7,'7Q',$00 
       DC.B      $C0,$CE,$18,'R',$01,$9B,$AD,'g' 
-      DC.B      'eÔøΩ@]',$DA,',',$E0,$7F
+      DC.B      'eû@]',$DA,',',$E0,$7F
       DC.B      $97,$E5,'E',$C3,$C0,$C4,'-',$B5 
       DC.B      $FB,'u',$1E,'&',$0A,'Yk',$8F
       DC.B      $DE,'p=',$1F,'3',$8F,$FE,' '
@@ -16648,7 +16608,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '/',$AE,$06,$00,$10,$10,'@',$00 
       DC.B      $C5,$93,$F8,$08,$BF,$FF,$A0,$90 
       DC.B      '@',$0D,$F9,$03,$BF,$FC,$FE,$00 
-      DC.B      '<ÔøΩ"',$F4,'@v',$18,$12
+      DC.B      '<é"',$F4,'@v',$18,$12
       DC.B      '}',$BD,$11,$0C,$D6,$00,')',$04 
       DC.B      $0D,'O',$80,$00,'r',$08,$18,$00 
       DC.B      $0D,$90,'k',$FF,$B0,'B',$F6,'_' 
@@ -16656,7 +16616,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '~',$F6,$AB,$B5,$10,$00,$80,'}' 
       DC.B      '%S',$F7,$FF,$F8,$AF,$84,$00
       DC.B      'H',$08,$ED,$00,$00,$0E,$1D,'_' 
-      DC.B      $B0,$FD,$FF,$DD,'ÔøΩc',$DF,$FE
+      DC.B      $B0,$FD,$FF,$DD,'öc',$DF,$FE
       DC.B      $1F,$7F,$C1,'~]',$FF,$FD,$FC
       DC.B      '[',$FC,$F7,$FE,$8F,$DF,$7F,$F8 
       DC.B      $BF,$FC,$EC,'P&',$0D,'k',$FF
@@ -16792,7 +16752,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $80,' ',$C9,$7F,$FF,$DF,'J',$0A 
       DC.B      '}',$FE,$8D,$F4,$B8,'0',$DE,'W' 
       DC.B      $1F,$B7,$AF,$BA,$C1,$7F,$FE,'*' 
-      DC.B      'ÔøΩ|g$n',$1F,$FE,$EA 
+      DC.B      'û|g$n',$1F,$FE,$EA 
       DC.B      '@',$00,$01,$80,'|',$05,$7F,$FF 
       DC.B      $FC,$E7,$84,'0',$08,$08,'w',$FE 
       DC.B      'D',$FF,'y',$F6,'3A',$B6,$97
@@ -16823,7 +16783,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'm[v',$FA,$EF,$F0,'OT'
       DC.B      $05,$B5,$FD,$88,'Kr',$0B,'@'
       DC.B      $1F,'!',$BC,$87,$A9,'pE6' 
-      DC.B      'ÔøΩ!',$D5,'@',$02,$08,$01,$80
+      DC.B      'Å!',$D5,'@',$02,$08,$01,$80
       DC.B      $05,$05,$7F,$FF,$FF,$F7,$83,$80 
       DC.B      $04,$FE,$08,$00,$A0,$03,$80,$0D 
       DC.B      $09,$80,$00,$00,'@',$00,$80,$00 
@@ -16848,7 +16808,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      ',',$9F,'`KX',$92,$E8,$06 
       DC.B      $FC,'K',$E0,$10,$19,$CF,'w',$E9 
       DC.B      $00,'B7',$03,'B',$C9,$E1,$09
-      DC.B      'b?',$0D,$06,'1ÔøΩr',$00
+      DC.B      'b?',$0D,$06,'1ör',$00
       DC.B      $03,'?8',$BF,',v5~' 
       DC.B      $EC,$CF,$CB,'C',$DC,$D6,$AC,$1E 
       DC.B      $86,$86,'?EU',$14,'P',$02 
@@ -16870,7 +16830,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $B9,$BF,$FE,$95,$D4,$CE,$F8,$84 
       DC.B      $FF,$F1,$07,$FD,$01,$90,$04,$03 
       DC.B      $80,'u<',$9C,$F7,$07,$EF,$F9
-      DC.B      'q',$CA,'ÔøΩ&a',$04,'KÔøΩ'
+      DC.B      'q',$CA,'ö&a',$04,'Kî'
       DC.B      'c',$E9,$B9,'.',$C8,'Q',$E5,'w' 
       DC.B      $9D,$E4,$01,$00,'j',$1F,'P',$A8 
       DC.B      $AC,$BB,'G',$12,'y,',$C3,$B4
@@ -16962,7 +16922,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'J%x',$03,$18,'p',$0B,$EF 
       DC.B      $80,$03,'%p',$04,$01,$12,$CE
       DC.B      $80,'C',$A5,'k',$C2,$FE,$D1,$8D 
-      DC.B      $03,$88,$C3,$FF,$FD,'jÔøΩl' 
+      DC.B      $03,$88,$C3,$FF,$FD,'jÑl' 
       DC.B      $01,$AE,'N',$E3,'K',$81,$D8,$E6 
       DC.B      $0B,$F5,$05,$F6,$EE,$F1,$FE,$BA 
       DC.B      'a',$F0,$C8,'8',$83,$FC,$08,$BF 
@@ -16995,7 +16955,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'S',$BD,'r',$87,'f',$C4,$95,':' 
       DC.B      '(',$C0,$08,'S',$D0,$04,'l',$10 
       DC.B      $9E,$88,$B8,'KH',$D3,'tR' 
-      DC.B      'ÔøΩ ',$B0,'.',$14,'A',$A6,' '
+      DC.B      'î ',$B0,'.',$14,'A',$A6,' '
       DC.B      '$*',$00,$9C,$0C,'Z',$97,'U'
       DC.B      '$R',$C0,',',$B6,'?',$CB,$83
       DC.B      $FF,$1A,$B5,$00,$13,'q',$A5,'P' 
@@ -17033,7 +16993,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $DC,$C1,$83,$80,$05,$BF,$FF,$FD 
       DC.B      $DF,$DF,$83,$80,$01,$7F,$83,$80 
       DC.B      '"',$FD,$FF,$FF,$EB,'~',$DF,'?' 
-      DC.B      $FB,$EF,$7F,'ÔøΩ^',$07,'V',$AD
+      DC.B      $FB,$EF,$7F,'é^',$07,'V',$AD
       DC.B      $D9,$93,$FE,$AF,$FC,$EB,$F4,$9F 
       DC.B      $EB,$BF,$CC,$FB,$E0,$9F,'p\'
       DC.B      '?n',$E5,$02,$80,'{J%'
@@ -17098,7 +17058,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$F3,'Z',$A4,$00,$02,$80,'w' 
       DC.B      'j',$07,'@v',$A8,$7F,$F3,$97
       DC.B      'X',$BC,'~b',$06,$EB,$02,$18
-      DC.B      $DF,'y',$B5,$0D,'ÔøΩP> '
+      DC.B      $DF,'y',$B5,$0D,'öP> '
       DC.B      $04,$00,$00,'3',$C6,$E8,$02,$F0 
       DC.B      '%',$80,'knwD',$06,$F8
       DC.B      'P',$87,$CE,$01,$FE,$03,$0C,$11 
@@ -17116,12 +17076,12 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $81,$F4,$E7,$E2,$B0,$D0,$00,'|' 
       DC.B      'C$',$D5,$82,$A1,$C4,'_',$10
       DC.B      $00,'2',$B6,'nl3T1' 
-      DC.B      '(ÔøΩR',$05,'DO',$00,$13
+      DC.B      '(ÅR',$05,'DO',$00,$13
       DC.B      $D8,')',$00,$B1,'o@x',$E8 
       DC.B      $E8,$B0,$92,$00,'<',$03,$9F,$CC 
       DC.B      $FB,$FB,'D<@',$0D,$0C,$F1 
       DC.B      $CC,$14,$D6,$14,$D0,$0B,'#V'
-      DC.B      $95,$A9,$DF,'YÔøΩd@',$81
+      DC.B      $95,$A9,$DF,'Yûd@',$81
       DC.B      $07,'P',$95,'A',$95,' ',$10,'_' 
       DC.B      ' P',$03,$16,$B4,$06,$00,$01
       DC.B      'E',$15,$1E,$0E,'}/',$8D,$B6
@@ -17178,7 +17138,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'W',$FD,'e=',$CF,$03,$EB,$D8
       DC.B      $9D,$05,'/',$FF,$C8,'8',$CB,'C' 
       DC.B      $FF,$FE,':f',$E8,$FF,'<i' 
-      DC.B      'ÔøΩ{',$CC,$A3,$E7,$FF,'~',$DD
+      DC.B      'Å{',$CC,$A3,$E7,$FF,'~',$DD
       DC.B      '~',$F5,$B1,$FF,$AF,$27,$D6,$9D 
       DC.B      'J',$95,$FB,$87,';',$EE,$FF,'~' 
       DC.B      '~',$9D,'l',$7F,$D3,$04,'T',$9B 
@@ -17246,9 +17206,9 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $A2,$04,'(',$E0,$00,$B0,$10,'w' 
       DC.B      $07,$0A,'`|J5',$D3,$D4
       DC.B      $89,',r',$C0,$0A,$A0,$00,'p'
-      DC.B      'JÔøΩ=0',$02,$00,$00,$14
+      DC.B      'JÑ=0',$02,$00,$00,$14
       DC.B      $06,$81,$08,$93,$C3,$D8,$F6,$E5 
-      DC.B      $C2,'ÔøΩ ',$F7,$CE,'Q',$A3,$E0
+      DC.B      $C2,'ö ',$F7,$CE,'Q',$A3,$E0
       DC.B      $05,$01,$80,'!U',$FF,$FF,$FC
       DC.B      '}',$80,$00,'/',$FF,$FC,$05,'R' 
       DC.B      $04,$80,$81,$02,$14,$00,$00,$08 
@@ -17350,7 +17310,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '/+H',$01,'o',$00,$00,$FF 
       DC.B      $E2,'A',$BE,$D3,$BF,$EC,'3',$EB 
       DC.B      $FD,'U',$7F,$AB,$1F,$97,$CB,$EE 
-      DC.B      $E3,$E7,$BC,$B3,$C6,'~@ÔøΩ' 
+      DC.B      $E3,$E7,$BC,$B3,$C6,'~@ô' 
       DC.B      ' ',$10,$0E,$93,$1C,$91,$8C,'x' 
       DC.B      $0B,$8C,'i',$DD,$B3,$8A,'~',$18 
       DC.B      $01,'F',$02,$19,$FF,$FF,$83,$BC 
@@ -17409,7 +17369,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '|',$F9,'C',$D2,$00,'g',$FF,$C3 
       DC.B      $AA,$9F,$AC,$E0,$EF,$AA,$F6,$C4 
       DC.B      'A',$F6,'.',$FD,$EB,$7F,'?',$B7 
-      DC.B      $EA,$EF,$F3,$D7,$F4,'\ÔøΩ=' 
+      DC.B      $EA,$EF,$F3,$D7,$F4,'\ö=' 
       DC.B      $AA,'S',$9A,$BE,'Q/',$00,'2'
       DC.B      $F0,$13,$8E,$80,$80,'[Xv' 
       DC.B      ',',$00,$1E,':a',$DF,$B9,$90
@@ -17501,9 +17461,9 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $C3,$F0,'A',$A0,$C2,$00,$B0,$01 
       DC.B      $C0,$06,'B',$0F,$80,$00,$DF,$1D 
       DC.B      'U',$FC,$06,'?C',$0B,$F8,$10
-      DC.B      '?',$FE,'H]ÔøΩ&',$FF,$C2
+      DC.B      '?',$FE,'H]Ñ&',$FF,$C2
       DC.B      $12,'`',$80,$00,$80,$C0,$02,$04 
-      DC.B      '@',$00,'!',$0C,'r',$00,'&ÔøΩ'
+      DC.B      '@',$00,'!',$0C,'r',$00,'&Å'
       DC.B      $7F,$FF,$FB,$E4,$1F,$FC,$F6,$11 
       DC.B      $E2,$0A,'E',$E0,$00,$01,'_',$BE 
       DC.B      $C3,$9F,$FF,$F3,$FF,$FE,$7F,'7' 
@@ -17514,7 +17474,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '/',$FF,$FF,$7F,':',$DF,$DF,$F5 
       DC.B      '@',$F9,'!',$7F,$FF,$F3,'7',$EF 
       DC.B      $CD,$9F,$FF,'cC',$03,$9F,$CC
-      DC.B      'wÔøΩW',$FF,$EE,$03,'x',$9D 
+      DC.B      'wûW',$FF,$EE,$03,'x',$9D 
       DC.B      $FA,$0D,$F2,'}',$BE,$E0,'c',$FE 
       DC.B      $03,$FF,$C1,$BC,$F0,$03,$F1,$00 
       DC.B      'P',$BF,$CC,'>',$D8,$00,$1C,$FC 
@@ -17586,7 +17546,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $13,'&',$7F,$01,$FF,$AA,'R',$02 
       DC.B      $02,$80,'w',$AC,'G`u',$FE 
       DC.B      $7F,$E6,'?_6i',$C4,$CD
-      DC.B      'SÔøΩq',$F3,$7F,$C4,':',$07 
+      DC.B      'SÅq',$F3,$7F,$C4,':',$07 
       DC.B      $88,$02,'F',$CC,$00,$17,$FF,$CD 
       DC.B      $E7,$FF,$EE,$01,$16,$1C,'LY'
       DC.B      'P',$82,$CF,$B1,$F8,$DD,$BE,$01 
@@ -17601,7 +17561,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '+',$EF,'|',$BF,$E8,'D',$DF,$FE 
       DC.B      $10,$D0,$04,$03,$80,'u8',$9C
       DC.B      'e',$81,$B9,$E1,'z',$B7,$86,$04 
-      DC.B      $02,$A1,'v',$FA,$82,$7F,'=ÔøΩ'
+      DC.B      $02,$A1,'v',$FA,$82,$7F,'=Ñ'
       DC.B      'z',$0C,'8',$1A,$8F,$1C,$00,$00 
       DC.B      '|5k',$FF,$A7,$13,$86,$1C 
       DC.B      $8A,']',$88,'(',$0D,$B1,'B',$CD 
@@ -17692,7 +17652,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $08,$05,$19,$1C,$BF,$85,$80,$02 
       DC.B      $AA,'R',$02,$80,'{',$09,$0B,$FE 
       DC.B      $03,$8C,'0',$E9,$BF,$90,$02,$13 
-      DC.B      $07,$A7,'ÔøΩU',$E6,$E7,$FB,$F8
+      DC.B      $07,$A7,'öU',$E6,$E7,$FB,$F8
       DC.B      $FB,'n|',$97,$DF,$F3,$FB,'<'
       DC.B      $00,$0A,$FE,'{',$BD,$FF,$FD,$F3 
       DC.B      $DF,$FF,$EA,$83,$00,$00,'{]'
@@ -17754,7 +17714,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$12,$E9,$F7,$FF,$FB,$FF,$FB 
       DC.B      'U',$94,$02,$80,'{',$09,$0B,$BD 
       DC.B      $FD,$FC,'?',$0C,'e',$95,$0F,$EE 
-      DC.B      $07,$BF,'ÔøΩU',$E7,'\',$07,$F0
+      DC.B      $07,$BF,'öU',$E7,'\',$07,$F0
       DC.B      '{>w',$F5,$A7,$0B,$F3,$EF 
       DC.B      $FF,$FF,$F4,'y',$E8,$00,$0F,$F3 
       DC.B      $D9,'k',$8B,$87,'?}',$EB,$01
@@ -17779,7 +17739,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $EF,$80,'T',$F0,$01,$FB,$80,')' 
       DC.B      '%',$1F,$C3,$0A,$94,$B4,$B4,$FF 
       DC.B      'o',$FE,'`>',$FF,$FE,$BE,'9'
-      DC.B      ' H',$0B,'ÔøΩ~',$FB,'$v'
+      DC.B      ' H',$0B,'ö~',$FB,'$v'
       DC.B      $80,$00,'\|',$D9,'z',$F4,$07
       DC.B      $A2,$09,' ',$02,'>',$BC,$A8,$AF 
       DC.B      ']',$B3,$CF,$D3,$D3,'2',$B1,$FF 
@@ -17968,7 +17928,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $04,$C0,$00,$00,$01,$04,$80,$0B 
       DC.B      $07,$DE,$BF,$E9,'U',$1C,$CF,$FD 
       DC.B      $1F,'U',$AA,$04,$80,$11,$02,$BF 
-      DC.B      $FF,$FF,$EF,$D3,'@ÔøΩm',$DF 
+      DC.B      $FF,$FF,$EF,$D3,'@Åm',$DF 
       DC.B      $DF,$FF,$FF,$FD,'K',$FA,$BF,$85 
       DC.B      $80,$13,$DF,$FF,$FF,$D0,$00,$00 
       DC.B      'J',$97,$FF,$FF,$FE,$D7,$FF,$EC 
@@ -18038,7 +17998,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '$$',$F7,$D5,'XgB',$B7
       DC.B      $85,$80,$02,$F4,'W',$85,$80,$03 
       DC.B      $ED,$A1,$08,$02,$80,$14,$02,'-' 
-      DC.B      $7F,$01,'ÔøΩ(',$05,$EF,$D8,$00
+      DC.B      $7F,$01,'é(',$05,$EF,$D8,$00
       DC.B      ']',$F8,$00,$02,'o',$DF,$FF,$FF 
       DC.B      $E7,$D0,$04,$80,$12,$15,$FF,'o' 
       DC.B      $A8,$00,$05,$A9,$00,$00,$02,'I' 
@@ -18143,7 +18103,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FE,$80,$10,$04,$80,$09,$05 
       DC.B      $FF,$C8,$90,$00,$00,$10,'%@'
       DC.B      $04,$80,$07,$05,$F6,$AA,$0F,$EC 
-      DC.B      'ÔøΩ@',$08,$80,$03,$02,$AA,$EF
+      DC.B      'ö@',$08,$80,$03,$02,$AA,$EF
       DC.B      $83,$80,'$',$FD,$00,$00,$04,$A0 
       DC.B      '(',$00,$10,$00,$15,'PU@' 
       DC.B      $09,'z',$00,$15,'UW',$F5,'w'
@@ -18211,7 +18171,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FE,$80,$10,'w',$7F,$FF,$A0,$05 
       DC.B      $C0,$00,$00,'B',$01,')',$08,$80 
       DC.B      $00,$01,'7',$AF,'@',$00,$A0,$08 
-      DC.B      $14,'ÔøΩC',$FF,$BF,$DF,$AA,'W'
+      DC.B      $14,'öC',$FF,$BF,$DF,$AA,'W'
       DC.B      $FF,$FF,$F7,$82,$AA,$E0,$04,$80 
       DC.B      $07,$04,$C0,$BA,$08,$D0,$00,$90 
       DC.B      $06,$80,$01,$90,$03,$80,$01,$A0 
@@ -18296,7 +18256,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $80,$0E,$FC,$00,'?d',$0A,'J'
       DC.B      $80,$00,$0C,$12,'U',$00,$02,$0E 
       DC.B      $03,$80,$02,$03,'O',$8A,$80,$01 
-      DC.B      $FC,$04,$80,'+ÔøΩp',$00,$D0 
+      DC.B      $FC,$04,$80,'+Åp',$00,$D0 
       DC.B      $85,' ',$04,$80,$1A,$85,$E7,'k' 
       DC.B      $F8,$95,$D3,$85,$1F,'RAT' 
       DC.B      'k',$D0,$04,'V',$0A,$AA,$CF,$FE 
@@ -18957,7 +18917,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $00,$00,$BE,$80,$00,$82,']',$DD 
       DC.B      $EB,$00,' ',$00,$10,'B',$FE,$83 
       DC.B      $80,$0A,$FE,$BF,$FA,$DF,$E2,$CA 
-      DC.B      'ÔøΩ^Q$',$05,$04,$80,$05
+      DC.B      'é^Q$',$05,$04,$80,$05
       DC.B      $08,$07,$9F,$01,$F7,$8B,$80,$03 
       DC.B      $7F,$FF,$F5,$83,$80,$0A,'W',$FE 
       DC.B      $AA,$AA,$A8,' ',$05,'U_',$FE
@@ -19116,7 +19076,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $00,$02,$86,$80,$06,$E1,$7F,$FF 
       DC.B      $FF,$C5,$10,$06,$02,$80,'C',$01 
       DC.B      $01,'p',$FC,$0F,$FB,$D3,$8F,$80 
-      DC.B      $7F,'ÔøΩz',$FF,$FF,$D2,' ',$AE
+      DC.B      $7F,'Åz',$FF,$FF,$D2,' ',$AE
       DC.B      $FB,$B7,$C1,'~',$D9,'"',$10,$BD 
       DC.B      $00,'*',$AB,'~',$FF,'@',$91,$00 
       DC.B      $17,$D0,$7F,$EA,$01,$E0,$00,$97 
@@ -19284,7 +19244,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $EA,$15,$FF,$FA,$80,$00,$00,$14 
       DC.B      'UU',$7F,$83,$80,$08,$D8,'.'
       DC.B      $FF,$8B,'C',$BF,$BA,'@',$06,$03 
-      DC.B      $80,$19,' ÔøΩc',$F8,$07,$1F 
+      DC.B      $80,$19,' ûc',$F8,$07,$1F 
       DC.B      $19,$E1,$17,$FE,$B5,'J',$AA,$FF 
       DC.B      $FF,$FB,$B1,'/',$FD,'@',$A0,$00 
       DC.B      $00,$02,'[',$87,$80,$06,$F5,$00 
@@ -19482,7 +19442,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '@z',$02,$BD,$FA,$80,$05,$09
       DC.B      '_',$FD,$FF,$FF,$F6,$FF,$FF,$D4 
       DC.B      $01,'R',$DF,$DC,'o',$FF,$DB,'u' 
-      DC.B      '@:I',$7F,$FA,'nÔøΩB' 
+      DC.B      '@:I',$7F,$FA,'nîB' 
       DC.B      $D7,$E2,$D0,$01,$84,$80,$0A,$AA 
       DC.B      $8A,$DD,$85,$80,$07,$FA,$A8,$00 
       DC.B      $00,$04,$A0,' ',$04,$80,$08,$04 
@@ -19752,7 +19712,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $1C,$BF,$DF,$FE,'@',$01,'_',$BF 
       DC.B      $83,$80,$05,$B4,$09,'_h',$04
       DC.B      $03,$80,$01,$BF,$85,$80,$09,$C9 
-      DC.B      '@',$00,$00,'.ÔøΩ',$7F,$FF,$F7
+      DC.B      '@',$00,$00,'.Å',$7F,$FF,$F7
       DC.B      $86,$80,$0E,$FD,'R',$BB,'oP'
       DC.B      $00,'J',$FF,$E8,$00,$00,$90,$04 
       DC.B      $05,$93,$80,$06,$E8,'u',$FF,$F5 
@@ -19816,7 +19776,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$AA,'@',$06,$80,$02,$01,$7F 
       DC.B      $8B,$80,$11,$FE,$FF,$FF,$D5,'U' 
       DC.B      'U@',$00,$00,$05,$7F,$FF,$FF
-      DC.B      $D5,'TÔøΩB',$06,$80,$03,$95 
+      DC.B      $D5,'TÑB',$06,$80,$03,$95 
       DC.B      'J',$82,$03,$80,$0F,$82,$A0,$90 
       DC.B      $00,$AA,$AD,$BA,$BB,$F7,$AA,$00 
       DC.B      '+',$FF,$99,'`',$06,$02,$80,$08 
@@ -20504,7 +20464,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      'E',$FF,$F5,'U@',$00,$BF,$83
       DC.B      $80,$05,$AA,$82,$8A,'*',$A4,$03 
       DC.B      $80,$10,$0A,$9B,'m',$B4,$AA,$AA 
-      DC.B      $95,'"ÔøΩ?',$FF,$FD,$FF,$DD 
+      DC.B      $95,'"î?',$FF,$FD,$FF,$DD 
       DC.B      $7F,'@',$04,$80,$04,$0A,$04,$02 
       DC.B      $BF,$85,$80,$04,$D5,$00,'$@'
       DC.B      $14,$80,$01,$A8,$03,$80,$10,'D' 
@@ -20593,7 +20553,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $05,'G_',$EF,'}',$C0,$00,$00
       DC.B      $8B,$FF,$FE,$DF,$84,$80,$1E,$FB 
       DC.B      $FF,$FF,$DB,$7F,$EF,$BF,$FA,'!' 
-      DC.B      $FF,$F0,$00,$BD,$FF,']ÔøΩ7' 
+      DC.B      $FF,$F0,$00,$BD,$FF,']Å7' 
       DC.B      $BF,$FC,'+',$DE,$DF,'_',$F0,'$' 
       DC.B      $00,$10,$02,$80,$05,$86,$80,$0C 
       DC.B      $D5,'IUUU@',$00,$00 
@@ -20976,12 +20936,12 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $00,$88,$98,'p',$00,$88,$98,'p' 
       DC.B      $00,$84,$98,'l',$00,$84,$98,'l' 
       DC.B      $00,$80,$98,'l',$00,$80,$98,'h' 
-      DC.B      $00,'|ÔøΩh',$00,'|ÔøΩh' 
-      DC.B      $00,'xÔøΩd',$00,'xÔøΩd' 
-      DC.B      $00,'tÔøΩd',$00,'tÔøΩ`' 
-      DC.B      $00,'pÔøΩ`',$00,'p',$90,'\' 
+      DC.B      $00,'|îh',$00,'|îh' 
+      DC.B      $00,'xîd',$00,'xîd' 
+      DC.B      $00,'tîd',$00,'tî`' 
+      DC.B      $00,'pî`',$00,'p',$90,'\' 
       DC.B      $00,'l',$90,'\',$00,'l',$8C,'\' 
-      DC.B      $00,'l',$88,'\',$00,'pÔøΩ\' 
+      DC.B      $00,'l',$88,'\',$00,'pÑ\' 
       DC.B      $00,'p',$80,'\',$00,'t|\' 
       DC.B      $00,'t|\',$00,'xx\' 
       DC.B      $00,'xt\',$00,'xp\' 
@@ -23119,7 +23079,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$00,';' 
       DC.B      $00,'>',$FF,$C3,$FF,$FC,$FF,$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,$E0,'|' 
-      DC.B      $00,$B2,$7F,'ÔøΩ',$7F,$87,$80,'x' 
+      DC.B      $00,$B2,$7F,'Ñ',$7F,$87,$80,'x' 
       DC.B      $FF,$FF,$00,$00,$00,$00,$B6,$EA 
       DC.B      'm',$F7,$1C,$04,$FC,$07,$03,$F8 
       DC.B      $FF,$FF,$00,$00,$00,$00,$E7,$27 
@@ -23373,7 +23333,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$07,$10 
       DC.B      $9C,$D8,$B9,'7~',$0F,$00,$00
       DC.B      $FF,$FF,$00,$00,$00,$00,$8C,$B6 
-      DC.B      ':',$1E,'ÔøΩ!ÔøΩ?q',$C0 
+      DC.B      ':',$1E,'é!é?q',$C0 
       DC.B      $FF,$FF,$00,$00,$00,$00,'$',$CA 
       DC.B      $14,'2',$FF,$FD,$F8,$00,$00,$00 
       DC.B      $FF,$FF,$00,$00,$00,$00,$F4,',' 
@@ -23409,7 +23369,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$83,'_' 
       DC.B      $7F,$FF,$00,$00,$FF,$FF,$00,$00 
       DC.B      $FF,$FF,$03,$00,$00,$00,$C7,'c' 
-      DC.B      'ÔøΩw',$07,$AC,$F3,$C8,$0F,$F0
+      DC.B      'îw',$07,$AC,$F3,$C8,$0F,$F0
       DC.B      $FF,$FF,$00,$00,$00,$00,$AA,'W' 
       DC.B      ';',$8B,$9E,$D7,'|',$CF,$00,$C0 
       DC.B      $FF,'?',$00,$00,$00,$00,$C8,'y' 
@@ -23523,7 +23483,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$AB,$CA 
       DC.B      $9C,'*',$D0,$1E,$1F,$F9,$E0,$07 
       DC.B      $FF,$FF,$00,$00,$00,$00,$A2,'^' 
-      DC.B      'ÔøΩs',$C0,$C6,$00,';',$FF,$FC
+      DC.B      'Ås',$C0,$C6,$00,';',$FF,$FC
       DC.B      $FF,$FF,$00,$00,$00,$00,$CA,$95 
       DC.B      'K',$B8,$1B,'!',$C4,'>?',$C0
       DC.B      $FF,$FF,$00,$00,$00,$00,$19,$ED 
@@ -23535,7 +23495,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '~',$1F,$00,$00,$00,$00,'l',$85 
       DC.B      '+',$CA,$12,'z',$FC,$86,$FF,$01 
       DC.B      $FF,$FF,$00,$00,$00,$00,$BA,'Z' 
-      DC.B      'ZnMÔøΩo',$F1,$8F,$FF 
+      DC.B      'ZnMéo',$F1,$8F,$FF 
       DC.B      $F0,$00,$00,$00,$00,$00,'v',$E4 
       DC.B      $87,$8A,'U5',$C9,$EE,$C1,$E0
       DC.B      '>',$1F,$00,$00,$00,$00,$A8,'"' 
@@ -23543,7 +23503,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $0F,$E0,$00,$00,$00,$00,$E0,$84 
       DC.B      $EF,$9C,$E5,'9',$1C,$81,$FC,'~' 
       DC.B      $03,$FF,$00,$00,$00,$00,'!',$E7 
-      DC.B      $10,'ÔøΩ_',$A0,$9F,$9F,$1F,$80
+      DC.B      $10,'é_',$A0,$9F,$9F,$1F,$80
       DC.B      $E0,$7F,$00,$00,$00,$00,$8A,$8A 
       DC.B      $BB,'X',$D3,$CD,$1C,';',$1F,$F8 
       DC.B      $E0,$07,$00,$00,$00,$00,'A',$EA 
@@ -23577,7 +23537,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,'TO'
       DC.B      $FF,$91,'H',$1F,'o',$E0,$8F,$FF 
       DC.B      $F0,$00,$00,$00,$00,$00,'nj'
-      DC.B      $8F,'ÔøΩ]5',$C1,$EE,$C1,$E0 
+      DC.B      $8F,'é]5',$C1,$EE,$C1,$E0 
       DC.B      '>',$1F,$00,$00,$00,$00,'h',$A6 
       DC.B      $10,'+',$E3,'s',$97,$BC,$F0,'?' 
       DC.B      $0F,$C0,$00,$00,$00,$00,$96,$A9 
@@ -23613,7 +23573,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$F8,$00,$00,$00,$00,'l',$E2 
       DC.B      $D4,$F5,'k',$CB,$DD,'(',$C1,$E7 
       DC.B      '>',$1F,$18,$00,$10,$00,$EC,$1C 
-      DC.B      $B7,'KÔøΩ"~F',$FF,$81 
+      DC.B      $B7,'Kô"~F',$FF,$81 
       DC.B      $FF,$FF,$00,$00,$00,$00,$97,$B4 
       DC.B      $BC,'"',$08,'>/',$C1,$CF,$FF
       DC.B      $F0,$00,$00,$00,$00,$00,'YI'
@@ -23629,7 +23589,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $80,$0F,$00,$00,$00,$00,$E3,'P' 
       DC.B      $FE,'jTx',$98,'y',$1F,$87 
       DC.B      $E0,$00,$00,$00,$00,$00,$C0,$15 
-      DC.B      $02,$D3,$E6,$9D,$A4,$B1,$98,'ÔøΩ' 
+      DC.B      $02,$D3,$E6,$9D,$A4,$B1,$98,'é' 
       DC.B      $7F,$7F,$00,$00,$00,$00,$04,'Z' 
       DC.B      '0s',$EE,$DC,$E0,$9F,$1F,$1F
       DC.B      $FF,$E0,$00,$00,$00,$00,'h',$EF 
@@ -23727,7 +23687,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,'r',$DB 
       DC.B      $09,$86,$D5,$A1,$CE,$C0,'?',$00 
       DC.B      $FF,$FF,$00,$00,$00,$00,$14,$E2 
-      DC.B      $B4,',ÔøΩ2}',$C1,$03,$FF
+      DC.B      $B4,',é2}',$C1,$03,$FF
       DC.B      $FF,$FF,$06,$00,$02,$00,'g',$AA 
       DC.B      $8B,$D8,'?',$D3,$C6,$9C,$FF,$1F 
       DC.B      $FF,$E0,$00,$00,$00,$00,'$4'
@@ -23767,7 +23727,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,'Y]'
       DC.B      ':',$04,$D5,'#',$CE,'@?',$80
       DC.B      $FF,$FF,$00,$00,$00,$00,$CC,']' 
-      DC.B      $A8,$B1,'ÔøΩ#y',$C0,$07,$FF 
+      DC.B      $A8,$B1,'ö#y',$C0,$07,$FF 
       DC.B      $FF,$FF,$06,$00,$06,$00,$F3,$13 
       DC.B      $27,$F1,'7',$DA,$CE,$9C,$FF,$1F 
       DC.B      $FF,$E0,$00,$00,$00,$00,$EC,$BD 
@@ -23780,14 +23740,14 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $16,'U',$B5,'_vN',$08,'@' 
       DC.B      $FF,$BF,$00,$00,$00,$00,'v7'
       DC.B      '{',$B7,$1F,'gw',$B8,'p?' 
-      DC.B      $8F,$C0,$00,$00,$00,$00,$1B,'ÔøΩ' 
+      DC.B      $8F,$C0,$00,$00,$00,$00,$1B,'é' 
       DC.B      'E',$B6,'6',$AC,$F2,'H',$F1,$F0 
       DC.B      $0F,$FF,$00,$00,$00,$00,'Z',$00 
       DC.B      $98,$0C,$E6,$A1,$FE,'a',$FE,$1E 
       DC.B      $01,$FF,$00,$00,$00,$00,'m',$95 
       DC.B      'A-)E',$B1,'->',$E2 
       DC.B      $C0,$1F,$00,$00,$00,$00,$81,$BE 
-      DC.B      'YÔøΩ1',$97,$A1,$8D,'>|'
+      DC.B      'YÑ1',$97,$A1,$8D,'>|'
       DC.B      $C0,$03,$00,$00,$00,$00,$E4,$A3 
       DC.B      ']',$C7,'L',$8D,'6',$A1,$F8,$9E 
       DC.B      $FF,$7F,$00,$00,$00,$00,$80,'(' 
@@ -23813,7 +23773,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$F0,$00,$00,$00,$00,'/',$F0 
       DC.B      't',$FB,$8B,$C0,'](',$C1,$E7
       DC.B      '>',$1F,$18,$00,$08,$00,'r4'
-      DC.B      'ÔøΩVZ',$06,'<',$8D,$FF,$03 
+      DC.B      'éVZ',$06,'<',$8D,$FF,$03 
       DC.B      $FF,$FF,$00,$00,$00,$00,'WR'
       DC.B      '"kTy',$98,'x',$E0,'x'
       DC.B      $FF,$87,$00,$00,$00,$00,$B4,$C1 
@@ -24119,7 +24079,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$07,$FF 
       DC.B      $05,'_',$F8,$BA,$FE,$FC,$FF,$00 
       DC.B      $FF,$FF,$03,$F0,$03,$80,$93,'p' 
-      DC.B      'gÔøΩ;',$FE,$17,$FF,$0F,$FF 
+      DC.B      'gÅ;',$FE,$17,$FF,$0F,$FF 
       DC.B      $FF,$FF,$00,$C0,$00,$80,$84,'d' 
       DC.B      $F9,$87,$A6,$D4,'=',$E5,$C3,$FB 
       DC.B      $FF,$FF,$C0,$10,$C0,$10,$E9,'2' 
@@ -24192,7 +24152,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $9C,$E3,'&',$CE,$C7,'#',$F8,$1C 
       DC.B      $FF,$FF,$0C,$00,$0C,$00,$FE,$B5 
       DC.B      'N_',$0C,$8E,$DF,$00,'?',$FF
-      DC.B      $FF,$FF,$0E,'~',$06,'xÔøΩ~' 
+      DC.B      $FF,$FF,$0E,'~',$06,'xû~' 
       DC.B      $C6,'x',$DF,$FF,$CF,$FF,'?',$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,$00,$00 
       DC.B      $00,$00,$FF,$FF,$FF,$FF,$FF,$FF 
@@ -24239,7 +24199,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$07,$01 
       DC.B      $05,'X',$F8,$BD,$FE,$FE,$FF,$00 
       DC.B      $FF,$FF,$02,$00,$00,$00,$83,'\' 
-      DC.B      $95,'ÔøΩZ',$00,'7',$FF,$0F,$FF
+      DC.B      $95,'éZ',$00,'7',$FF,$0F,$FF
       DC.B      $FF,$FF,$01,$80,$00,$80,')',$98 
       DC.B      'X',$84,$DF,$CF,'e',$ED,$83,$F3 
       DC.B      $FF,$FF,$C0,$00,$C0,$00,$D5,'h' 
@@ -24467,7 +24427,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$1E,$00,$1C,'6',$FF 
       DC.B      'f]',$AD,$9E,$97,$BF,'x',$7F
       DC.B      $FF,$FF,$00,$00,$00,$00,$99,$99 
-      DC.B      ')ÔøΩ`',$CC,$B0,'C',$C0,'?' 
+      DC.B      ')î`',$CC,$B0,'C',$C0,'?' 
       DC.B      $FF,$FF,$00,$00,$00,$00,$B6,'r' 
       DC.B      $C5,$EA,$06,$9B,$F8,$FB,$FF,$04 
       DC.B      $FF,$FF,$1E,$18,$0C,$08,'>t'
@@ -24579,7 +24539,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$C0,'3' 
       DC.B      $FD,'v',$04,$CE,$F9,'~',$FE,'~' 
       DC.B      $FF,$81,$06,$00,$06,$00,$1E,$1B 
-      DC.B      'ÔøΩ^G;/',$A6,$1F,$C1 
+      DC.B      'é^G;/',$A6,$1F,$C1 
       DC.B      $FF,$FF,'@',$00,$00,$00,$DB,$93 
       DC.B      $9B,$DB,'d',$09,$FF,$ED,$FF,$F1 
       DC.B      $FF,$FE,$03,$E0,$00,'`',$7F,$97 
@@ -24604,7 +24564,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $D2,$11,$CB,'3f',$DE,$81,$E1
       DC.B      $FF,$FF,$C0,$00,$C0,$00,$DC,'$' 
       DC.B      $C8,'n',$E5,$C0,$F6,' ',$F8,$1F 
-      DC.B      $FF,$FF,$18,$02,$18,$02,'ÔøΩg'
+      DC.B      $FF,$FF,$18,$02,$18,$02,'ög'
       DC.B      '[',$8F,$7F,$82,'=',$17,$FE,$0F 
       DC.B      $FF,$FF,$03,$00,$03,$00,$EF,$A7 
       DC.B      $9F,$DD,$B3,'p7',$A2,$CF,$C1
@@ -24627,7 +24587,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      '?',$FF,$00,'<',$00,'8s',$94
       DC.B      $0A,'x',$10,$BF,$1E,$7F,$E1,$FF 
       DC.B      $FF,$FF,$00,$01,$00,$01,$27,'m' 
-      DC.B      'ÔøΩ)p',$0B,$A7,$E3,$C7,$E7 
+      DC.B      'î)p',$0B,$A7,$E3,$C7,$E7 
       DC.B      $F8,$1F,$C0,$00,$80,$00,$F2,$17 
       DC.B      $A1,$E1,$C2,$91,$FC,$F1,$FF,$0E 
       DC.B      $FF,$FF,$0E,'p',$0C,'p',$AF,'8' 
@@ -24679,7 +24639,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$01,$00 
       DC.B      $01,'\',$FE,$B3,$FF,$DF,$FF,$E0 
       DC.B      $FF,$FF,$00,'@',$00,$00,'f',$F0 
-      DC.B      'h',$B9,'ÔøΩF',$F9,$FF,$07,$FF
+      DC.B      'h',$B9,'öF',$F9,$FF,$07,$FF
       DC.B      $FF,$FF,$00,$00,$00,$00,$8A,'Q' 
       DC.B      'CX',$DB,'sf',$9E,$81,$E1 
       DC.B      $FF,$FF,$E0,$00,$C0,$00,'h',$E8 
@@ -24785,8 +24745,8 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$01,$00,$01,$00,$27,$00 
       DC.B      $AB,'c',$0D,$80,$1B,$FF,$07,$FF 
       DC.B      $FF,$FF,$00,'<',$00,'0',$BF,',' 
-      DC.B      '@0V?ÔøΩ',$7F,$E0,$FF 
-      DC.B      $FF,$FF,$00,$01,$00,$01,'ÔøΩ)'
+      DC.B      '@0V?ô',$7F,$E0,$FF 
+      DC.B      $FF,$FF,$00,$01,$00,$01,'é)'
       DC.B      ')3e',$F9,$B6,$13,$C7,$F7 
       DC.B      $F8,$0F,$80,$00,$80,$00,$AA,$C1 
       DC.B      $95,$94,$D9,$0C,$E1,$FC,$FE,$03 
@@ -24979,7 +24939,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$E0,$00,$A0,$00,'O',$12 
       DC.B      $A1,$9C,$F4,$E0,$F9,$00,$FE,$00 
       DC.B      $FF,$FF,$07,$00,$06,$00,$E7,'^' 
-      DC.B      'ÔøΩS',$BF,'>',$97,$A1,$8F,$C0
+      DC.B      'éS',$BF,'>',$97,$A1,$8F,$C0
       DC.B      $7F,$FF,$04,$00,$00,$00,$FC,$CA 
       DC.B      $08,$F4,$A7,$05,$9F,$F9,$7F,$FE 
       DC.B      $FF,$FF,$00,$E7,$00,$C7,$09,$B7 
@@ -25019,13 +24979,13 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$E0,$00,$A0,$00,'S',$C3 
       DC.B      $B3,$84,$E6,$F8,$FB,$00,$FC,$00 
       DC.B      $FF,$FF,$07,$00,$06,$00,$BF,$17 
-      DC.B      'ÔøΩS',$BF,'>',$97,$A1,$8F,$C0
+      DC.B      'éS',$BF,'>',$97,$A1,$8F,$C0
       DC.B      $7F,$FF,$0F,$E0,$0D,$E0,$C2,$CC 
       DC.B      $CD,$E9,$9F,$F3,$BF,$FD,$7F,$FE 
       DC.B      $FF,$FF,$00,$CF,$00,$C7,$A7,$0A 
       DC.B      '-',$C7,'Y',$FF,$84,$FF,$03,$FF 
       DC.B      $FF,$FF,$00,$02,$00,$00,$83,$BE 
-      DC.B      'ÔøΩq.',$0A,$CE,$07,$F1,$FF 
+      DC.B      'éq.',$0A,$CE,$07,$F1,$FF 
       DC.B      $FF,$FF,$00,'/',$00,$07,$BB,'o' 
       DC.B      $97,$C7,$83,$BF,'!',$7F,$C0,$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,$95,$98 
@@ -25039,7 +24999,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$00,'D' 
       DC.B      $00,'R',$FF,$AD,$FF,$F7,$FF,$F8 
       DC.B      $FF,$FF,$00,$1C,$00,$18,$06,'|' 
-      DC.B      ';ÔøΩ|\',$00,'?',$FF,$FF
+      DC.B      ';ö|\',$00,'?',$FF,$FF
       DC.B      $FF,$FF,$00,$80,$00,$80,$DF,$96 
       DC.B      '3',$99,$10,$CC,'U',$ED,$93,$F3 
       DC.B      $EF,$FF,$E0,$00,$C0,$00,$F3,$9A 
@@ -25229,7 +25189,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,'N',$00,'N',$09,$8F 
       DC.B      $91,$CF,$CD,$FF,$13,'~',$E0,$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,'4',$15 
-      DC.B      $D7,$CA,$F1,'yÔøΩx',$00,'x' 
+      DC.B      $D7,$CA,$F1,'yéx',$00,'x' 
       DC.B      $FF,$87,$0F,$00,$0F,$00,$8F,$00 
       DC.B      $CF,$0D,$8F,$AD,'_',$CC,'?',$F3 
       DC.B      $FF,$FF,'g',$C0,'G',$80,$FF,$C0 
@@ -25303,7 +25263,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,'g',$C0,'g',$C0,'W',$9D 
       DC.B      'w',$C2,$EF,$E9,$FF,$F0,$FF,$FF 
       DC.B      $FF,$FF,$00,'x',$00,'p',$DE,$F8 
-      DC.B      'd',$F2,'T',$FC,'ÔøΩ',$7F,$E1,$FF 
+      DC.B      'd',$F2,'T',$FC,'ö',$7F,$E1,$FF 
       DC.B      $FF,$FF,$00,$1E,$00,$1C,$AF,$1F 
       DC.B      'Z',$1C,$A4,$FE,'=',$FF,$C3,$FF 
       DC.B      $FF,$FF,$00,'.',$00,$0E,'`',$EE 
@@ -25621,7 +25581,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$07,$00,$07,$00,$F6,$1D 
       DC.B      $17,$1B,$D7,$00,'?',$A5,$0F,$C3 
       DC.B      $FF,$FF,$FE,$00,$9E,$00,$FC,'~' 
-      DC.B      'ÔøΩz',$FF,$81,$FF,$FD,$FF,$FE
+      DC.B      'ûz',$FF,$81,$FF,$FD,$FF,$FE
       DC.B      $FF,$FF,$00,'x',$00,'x:',$F7
       DC.B      $0D,$FC,$0D,$F9,$F3,'~',$00,$FF 
       DC.B      $FF,$FF,$00,'0',$00,'0',$1D,$BE 
@@ -25630,7 +25590,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $DD,$FF,$98,$7F,$1A,$FF,$19,$FF 
       DC.B      $E7,$FF,$00,$00,$00,$00,'$',$8A 
       DC.B      'K',$00,$91,$A9,$EA,'g',$F3,$E0 
-      DC.B      $FC,$1F,$0E,$01,$0E,$01,$0E,'ÔøΩ' 
+      DC.B      $FC,$1F,$0E,$01,$0E,$01,$0E,'é' 
       DC.B      '^',$87,$DF,$C5,$CF,$03,'?',$FF 
       DC.B      $FF,$FF,$BE,$00,'>',$00,$BC,$7F 
       DC.B      '>',$7F,$FF,$80,$FF,$FF,$FF,$FF 
@@ -25670,7 +25630,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $AC,'v6',$FF,'<',$FF,'=',$FF
       DC.B      $C3,$FF,$00,$00,$00,$00,$9F,'.' 
       DC.B      $D5,$96,$17,$AE,$E2,'a',$FB,$E0 
-      DC.B      $FC,$1F,$0E,$03,$0E,$01,'ÔøΩk'
+      DC.B      $FC,$1F,$0E,$03,$0E,$01,'ék'
       DC.B      $EE,'IO',$03,$DF,$87,'?',$FF
       DC.B      $FF,$FF,'<',$00,'8',$00,'}',$FD 
       DC.B      'z',$03,$BC,$00,$FF,$FF,$FF,$FF 
@@ -25771,7 +25731,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$FF,$E0,$F7,$C0,$F9,$EE 
       DC.B      $F7,$CD,$FF,$ED,$FF,$F9,$FF,$F1 
       DC.B      $FF,$FE,$00,$00,$00,$00,'G',$BB 
-      DC.B      $EE,'7',$AB,$BD,$93,$91,$83,'ÔøΩ' 
+      DC.B      $EE,'7',$AB,$BD,$93,$91,$83,'é' 
       DC.B      '|',$7F,$18,$01,$18,$00,'x',$85 
       DC.B      $F9,$A8,$9C,'}',$BE,$B9,$7F,';' 
       DC.B      $FF,$C7,$F8,$07,$F0,$07,$EB,$1F 
@@ -25785,7 +25745,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$18,$00,$18,$99,'[' 
       DC.B      $0F,'8d=',$F7,'^',$07,'?' 
       DC.B      $F8,$FF,$03,$DC,$01,$80,$F3,']' 
-      DC.B      ')ÔøΩS',$FF,'w',$FE,$8F,$FF 
+      DC.B      ')ÅS',$FF,'w',$FE,$8F,$FF 
       DC.B      $FF,$FF,$00,'`',$00,$00,$87,$F7 
       DC.B      $1D,$91,$0F,'`R',$7F,$9E,$FF
       DC.B      $E1,$FF,$00,$00,$00,$00,$C5,'/' 
@@ -25802,7 +25762,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $19,'F',$E2,'[',$03,$B7,$FC,$0F 
       DC.B      $FF,$FF,$00,$01,$00,$01,$EE,'g' 
       DC.B      $C4,'aU',$1D,$9B,$03,$E0,$FF
-      DC.B      $FF,$FF,$C0,$00,$C0,$00,'ÔøΩ%'
+      DC.B      $FF,$FF,$C0,$00,$C0,$00,'é%'
       DC.B      $F9,$B4,$DB,')',$EC,$9E,$F0,$7F 
       DC.B      $FF,$FF,'<',$00,'<',$00,'Zx'
       DC.B      '|',$08,$FD,$C2,'>',$86,$FF,$01 
@@ -25811,7 +25771,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$F0,$E0,$E0,$00,'~',$E3 
       DC.B      $EE,$0B,$F1,$FD,$FF,$F5,$FF,$F9 
       DC.B      $FF,$FE,$00,$00,$00,$00,'S;'
-      DC.B      $AD,'7',$AA,$BD,$93,$91,$83,'ÔøΩ' 
+      DC.B      $AD,'7',$AA,$BD,$93,$91,$83,'é' 
       DC.B      '|',$7F,$18,$00,$18,$00,';',$B5 
       DC.B      $FB,'i',$9E,$FC,$BC,$B9,$7F,';' 
       DC.B      $FF,$C7,$F0,$07,$E0,$07,$D2,$13 
@@ -26011,7 +25971,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,'^B'
       DC.B      $E3,',KU39',$FC,$FE 
       DC.B      $FF,$FF,$00,$00,$00,$00,$D0,$A3 
-      DC.B      '~',$07,'^MÔøΩ!',$1E,$1E
+      DC.B      '~',$07,'^Mû!',$1E,$1E
       DC.B      $E1,$FF,$18,$01,$18,$00,$18,$BD 
       DC.B      $F8,$D4,$9D,$AB,$BE,$C5,$7F,$03 
       DC.B      $FF,$FF,$C0,$00,$C0,$00,$C2,'&' 
@@ -26129,7 +26089,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$07,$80,$03,$80,'G',$B5 
       DC.B      $E3,$80,'?',$D7,$17,$E7,$0F,$F8 
       DC.B      $FF,$FF,$00,$00,$00,$00,$C9,'e' 
-      DC.B      $A4,'EÔøΩ(',$80,$1E,$7F,$FF 
+      DC.B      $A4,'Eû(',$80,$1E,$7F,$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,$12,$83 
       DC.B      $D9,$DC,$9B,'%',$E3,'Y',$03,'>' 
       DC.B      $FC,$FF,$18,$01,$18,$01,$98,$A5 
@@ -26171,7 +26131,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$A4,$A1 
       DC.B      $92,$B3,$8F,'m',$80,$1E,$7F,$FF 
       DC.B      $FF,$FF,$00,$08,$00,$00,']',$FC 
-      DC.B      $B9,$F2,']',$09,'a]ÔøΩ>'
+      DC.B      $B9,$F2,']',$09,'a]Å>'
       DC.B      $FE,$FF,$18,$01,$18,$01,$D8,$B3 
       DC.B      $B8,$DB,$1D,$AF,$BE,$C5,$7F,$03 
       DC.B      $FF,$FF,$C0,$00,$C0,$00,$D1,'>' 
@@ -26549,7 +26509,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,'?',$00,'?',$BF,'_' 
       DC.B      $E2,$7F,$C1,'?',$00,$FF,$FF,$FF 
       DC.B      $FF,$FF,$80,$00,$00,$00,$86,$11 
-      DC.B      '^_ÔøΩ ',$E1,$FF,$FF,$FF
+      DC.B      '^_û ',$E1,$FF,$FF,$FF
       DC.B      $FF,$FF,$F8,'?p',$1E,$BB,$AD
       DC.B      's',$9E,$FC,$7F,$FF,$FF,$FF,$FF 
       DC.B      $FF,$FF,$1F,$FF,$1F,$FE,'_',$FF 
@@ -26563,7 +26523,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $FF,$FF,$00,$00,$00,$00,$0B,$B7 
       DC.B      $8F,$C5,$F8,$06,$07,$F8,$FF,$FF 
       DC.B      $FF,$FF,$00,'|',$00,'8',$FE,'~' 
-      DC.B      'ÔøΩ;',$01,'|',$00,$FF,$FF,$FF
+      DC.B      'é;',$01,'|',$00,$FF,$FF,$FF
       DC.B      $FF,$FF,'>',$00,$18,$00,$A7,$D8 
       DC.B      $99,'e~|',$FF,$83,$FF,$FF 
       DC.B      $FF,$FF,'G',$F8,$07,$B8,'[C'
@@ -26586,7 +26546,7 @@ ximg_data:DC.B      $00,$01,$03,$0B,$00,$08,$00,$02
       DC.B      $0F,$F8,$FF,$FF,$FF,$FF,$FF,$FF 
       DC.B      $FF,$FF,$00,$00,$00,$00,'k',$F9 
       DC.B      't',$00,$80,$00,$FF,$FF,$FF,$FF 
-      DC.B      $FF,$FF,$00,'<',$00,'8ÔøΩE' 
+      DC.B      $FF,$FF,$00,'<',$00,'8ÑE' 
       DC.B      $E9,'y',$0F,'>',$F0,$FF,$FF,$FF 
       DC.B      $FF,$FF,$03,$B1,$03,$00,$1A,$B5 
       DC.B      $93,$04,$17,$FB,$EF,$FF,$FF,$FF 
@@ -29167,7 +29127,7 @@ L0041:DCB.W     2,0
       DC.B      $A0,$A0,$00,$A0,'@@',$00,'@'
       DC.B      $C0,$C0,$00,$C0,'``',$00,'`'
       DC.B      $E0,$E0,$00,$E0 
-active_palette_vals:DCB.W     2,0 
+L0042:DCB.W     2,0 
       DC.B      $F8,$F8,$00,$F8,$F8,$F8,$00,$F8 
       DC.B      $F8,$F8,$00,$F8,$F8,$F8,$00,$F8 
       DC.B      $F8,$F8,$00,$F8,$F8,$F8,$00,$F8 
@@ -29431,9 +29391,9 @@ L0043:DC.B      $FC,$FC,$00,$FC,$FC,$FC,$00,$FC
       DC.B      $E0,$E0,$00,$E0 
  BSS
       DS.L      1 
-screen3:DS.L      1 
-screen1:DS.L      1 
-screen2:DS.L      1 
+L0044:DS.L      1 
+L0045:DS.L      1 
+L0046:DS.L      1 
 L0047:DS.L      1 
-which_routine:DS.B      1206
+L0048:DS.B      1206
 ZUEND: END
