@@ -3,6 +3,9 @@
 		include	SEQUENCE/SEQDEC.S
 
 ;-----------------------------------------------------------------------
+TEST_TITLE			equ 	0
+
+
 		rsreset
 s		rs.b	1
 o		rs.b	1
@@ -26,6 +29,25 @@ kick_in_script:
 		quit
 		
 main_script:
+		if TEST_TITLE
+		; ---------- TEST START ----------
+		loadfile	title_data
+		execute	title_data,0,0,0	;init
+
+		wait	0,$24
+		execute	title_data,1,0,1	;fade on
+
+		wait	1,$20
+		execute	title_data,1,0,2	;fade off
+
+		wait	2,$20
+		execute	title_data,1,0,3	;fade title on
+		wait	4,$2f
+		execute	title_data,1,0,4	;fade title off
+		wait	5,$2f
+		; ---------- TEST END ----------
+		endif
+
 		loadfile	mars_data
 		loadfile	fish_data
 		execute	mars_data,0,0,0
